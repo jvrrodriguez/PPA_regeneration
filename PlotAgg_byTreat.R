@@ -17,7 +17,7 @@ for (i in 1:length(data)){
 
   data.cat <- NULL
 
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/Results/PPA_", data[i],".pdf"), width=7, height=5)  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/PPA_", data[i],".pdf"), width=7, height=5)  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -31,7 +31,7 @@ for (i in 1:length(data)){
     
   for (j in 1:year.tmp){
   
-    load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/Results/PPA_", Year[j],".RData"))
+    load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/PPA_", Year[j],".RData"))
     
     data.ctrl <- get(paste0(data[i],".ctrl"))
     data.thnn <- get(paste0(data[i],".thnn"))
