@@ -51,9 +51,10 @@ sizead <- 2 # umbral (m) para discriminar adulto de juvenil
 Year <- c(2008, 2009, 2010, 2011, 2012, 2013)
 nsim <- 199
 fit.gam = FALSE
-save.output <- TRUE
+save.output <- FALSE
 
-summary.year <- data.frame(); summary.plot <- summary.year; summary.size.plot <- summary.year; summary.size <- summary.year; summary.quadrat <- summary.year
+summary.year <- data.frame(); summary.plot <- summary.year; 
+summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.rec.Q <- summary.year
 
 
 for (j in 1:length(Year)) {
@@ -288,7 +289,7 @@ for (j in 1:length(Year)) {
     layout(matrix(c(1), 1, 1, byrow = FALSE))
     
     
-    # Arrange datasets to analise
+    # Arrange datasets to analyse
     
     dens.all$im[[i]] <- density(data.year, sigma=bw.diggle(data.year))
     
@@ -446,7 +447,9 @@ for (j in 1:length(Year)) {
     
     Q.sp <- quadratcount(split(data.sp.rec$ppp[[i]]), nx = p.range[2]/2, ny = p.range[4]/2)
     
-    Q.size <- quadratcount(split(data.size.rec$ppp[[i]]), nx = p.range[2]/2, ny = p.range[4]/2)
+    Q.size.rec <- quadratcount(split(data.size.rec$ppp[[i]]), nx = p.range[2]/2, ny = p.range[4]/2)
+    
+    Q.size.ad <- quadratcount(data.size.c.ad$ppp[[i]], nx = p.range[2]/2, ny = p.range[4]/2)
     
     if (j != length(Year)) {
       
@@ -461,13 +464,17 @@ for (j in 1:length(Year)) {
         
         Q.fate <- quadratcount(split(data.fate.rec$ppp[[i]]), nx = p.range[2]/2, ny = p.range[4]/2)
         
-        summary.quadrat <- rbind(summary.quadrat, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size$Recruit), Fate = array(Q.fate$`1`)))
+        summary.rec.Q <- rbind(summary.rec.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size.rec$Recruit), Fate = array(Q.fate$`1`)))
+        
+        summary.ad.Q <- rbind(summary.ad.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Size = array(Q.size.ad)))
         
       } else {
         
         Q.fate <- quadratcount(data.fate.rec$ppp[[i]], nx = p.range[2]/2, ny = p.range[4]/2)
         
-        summary.quadrat <- rbind(summary.quadrat, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size$Recruit), Fate = array(Q.fate)))
+        summary.rec.Q <- rbind(summary.rec.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size.rec$Recruit), Fate = array(Q.fate)))
+        
+        summary.ad.Q <- rbind(summary.ad.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Size = array(Q.size.ad)))
         
       }
       
@@ -482,7 +489,9 @@ for (j in 1:length(Year)) {
       summary.plot <- rbind(summary.plot, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], 
                                                      table.plot %>% group_by(sp, size) %>% count()))
       
-      summary.quadrat <- rbind(summary.quadrat, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size$Recruit)))
+      summary.rec.Q <- rbind(summary.rec.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Sp.Fs = array(Q.sp$Fs), Sp.Qh = array(Q.sp$Qh), Sp.Qi = array(Q.sp$Qi), Size = array(Q.size.rec$Recruit)))
+      
+      summary.ad.Q <- rbind(summary.ad.Q, data.frame(Year = Year[j], Plot = i, Treat = Treat[i], Size = array(Q.size.ad)))
       
     }
     
@@ -491,9 +500,14 @@ for (j in 1:length(Year)) {
     
   }
   
-  if (save.output == T) write.csv(summary.plot, paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/summary.Plot_", Year[j], ".csv"))
-  if (save.output == T) write.csv(summary.quadrat, paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/summary.Quadrat_", Year[j], ".csv"))
-  
+  if (save.output == T) {
+    
+    write.csv(summary.ad.Q, paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/summary.ad.Q_", Year[j], ".csv"))
+    write.csv(summary.rec.Q, paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/summary.recruit.Q_", Year[j], ".csv"))
+    write.csv(summary.plot, paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/summary.Plot_", Year[j], ".csv"))
+    
+  }
+ 
   
   # Generate summary plots for supplementary material
   
@@ -555,7 +569,7 @@ for (j in 1:length(Year)) {
   for (i in Plots) {
     
     #L.E[[i]] <- envelope(data.size$ppp[[i]], Lest, r = seq(0,10,0.05), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-    g.E[[i]]<- envelope(data.size$ppp[[i]], pcf, r = seq(0,4,0.02), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
+    g.E[[i]] <- envelope(data.size$ppp[[i]], pcf, r = seq(0,4,0.02), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
     kNN.E[[i]] <- envelope(data.size$ppp[[i]], Gest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
     #F.E[[i]] <- envelope(data.size$ppp[[i]], Fest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
     
