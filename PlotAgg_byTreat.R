@@ -17,7 +17,7 @@ for (i in 1:length(data)){
 
   data.cat <- NULL
 
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/PPA_", data[i],".pdf"), width=7, height=5)  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],".pdf"), width=7, height=5)  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -31,7 +31,7 @@ for (i in 1:length(data)){
     
   for (j in 1:year.tmp){
   
-    load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/PPA_", Year[j],".RData"))
+    load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".RData"))
     
     data.ctrl <- get(paste0(data[i],".ctrl"))
     data.thnn <- get(paste0(data[i],".thnn"))
@@ -55,7 +55,7 @@ for (i in 1:length(data)){
     
     Plot.list[[j]] <- ggplot(data.cat[data.cat$Treat == j,], aes(x = r, y = Year)) + 
       geom_raster(aes(fill=value)) + 
-      scale_fill_gradient2(low = "indianred2", mid = "white", high = "darkolivegreen2", midpoint = .0) +
+      scale_fill_gradient2(low = "indianred3", mid = "white", high = "darkolivegreen3", midpoint = .0) +
       labs(x="Distance r (m)", y="Year") +
       scale_y_continuous(trans = "reverse") + 
       theme_bw() + theme(axis.text.x=element_text(size=9, angle=0, vjust=0.3),

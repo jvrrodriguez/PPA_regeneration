@@ -3,13 +3,14 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 
-Year <- c(2008, 2009, 2010, 2011)
+Year <- 2007+1:4
 data <- c("g.E", "kNN.E", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%")
+Treat2 <-  c("20%", "Thinned", "Control", "Control", "Thinned", "20%", "Thinned", "20%", "Control")
 
 Plot.list <- list()
 meanData <- NULL
-save.output <- FALSE
+save.output <- TRUE
 
 for (i in 1:length(data)){
 
@@ -58,8 +59,8 @@ for (i in 1:length(data)){
     
     Plot.list[[j]] <- ggplot(data.Plot[data.Plot$Plot == j, ], aes(x = r, y = Year)) + 
       geom_raster(aes(fill=value)) + 
-      scale_fill_gradient2(low = "grey", mid = "white", high = "indianred2", midpoint = .0) +
-      labs(x="Distance (m)", y="Year", title=paste("Plot", j, "//", Treat[j])) +
+      scale_fill_gradient2(low = "indianred3", mid = "white", high = "darkolivegreen3", midpoint = .0) +
+      labs(x="Distance (m)", y="Year", title=paste("Plot", j, "//", Treat2[j])) +
       theme_bw() + theme(axis.text.x=element_text(size=9, angle=0, vjust=0.3),
                          axis.text.y=element_text(size=9),
                          plot.title=element_text(size=11))
