@@ -1,0 +1,129 @@
+---
+title: "Bibliography"
+author: "Javier Rodriguez"
+date: "3/3/2021"
+bibliography: PPA_biblio.bib
+csl: ecology.csl
+output: word_document
+---
+
+This is a citation of paper:
+"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits in mixed forests after thinning. Ecosphere."
+
+
+# Introduction
+
+[@mcintire2009beyond]
+
+[@ma2010spatial]
+
+[@Wolf2005] 
+
+[@frelich2002forest]
+
+[@thebault2010stability; @walther2010community]
+
+[@tilman2018spatial]
+
+[@gratzer2004spatio]
+
+[@oliver1996forest]
+
+# *
+
+[@ganey2011tree]
+
+[@barbier2008influence]
+
+[@kenkel1988pattern; @moeur1997spatial; @plotkin2002cluster]
+
+[@perry2008spatial; @shen2013quantifying; @pescador2020tales]
+
+# *
+
+[@wiegand2014handbook]
+
+
+## Material and methods
+
+# Maps of environmental variables
+
+[@citeR]
+
+# Generalities of the point-pattern analysis
+
+[@wiegand2004rings; @law2009ecological]
+
+[@diggle2003introduction; @illian2008statistical]
+
+[@wiegand2004rings; @jacquemyn2007spatially]
+
+[[@wiegand2004rings]
+
+# Summary statistics of spatial-point patterns
+
+[@Baddeley2015]
+
+[@illian2008statistical]
+
+[@van1996nonparametric]
+
+[@citeR]
+
+[@Baddeley2015]
+
+[@law2009ecological]
+
+[@illian2008statistical]
+
+# Analysis 1: Description of aggregation patterns of trees and recruits
+
+[@diggle2003introduction; @illian2008statistical]
+
+[@Baddeley2015]
+
+[@de2008seedlings]
+
+[@wiegand2014handbook]
+
+# Analysis 2: Factors explaining the aggregation of recruits
+[@Baddeley2015]
+
+[@berman1986testing]
+
+[@wiegand2014handbook]
+
+
+## Discussion
+
+# Aggregation and association patterns of trees and recruits
+
+[@Wolf2005; @Franklin2010]
+
+[@Schupp1995; @Wright2002]
+
+[@dolanc2003effects; @yeo2006early]
+
+[@wright2014living]
+
+[@andivia2018adult]
+
+# Factors explaining the aggregation of recruits
+
+[@wiegand2014handbook]
+
+[@gotzenberger2012ecological]
+
+[@perry2008spatial; @shen2013quantifying; @pescador2020tales]
+
+[@solga2005nitrogen; @ackermann2012n2]
+
+[@stuiver2014impact]
+
+[@callaway1997competition]
+
+[@wiegand2009recruitment; @espinosa2016effects]
+
+[@hampe2008spatio; @batllori2009seedling]
+
+## Bibliography
