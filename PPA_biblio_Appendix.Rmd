@@ -1,0 +1,28 @@
+---
+title: "Bibliography for Appendix S1"
+author: "Javier Rodriguez"
+date: "3/3/2021"
+bibliography: PPA_biblio.bib
+csl: ecology.csl
+output: word_document
+---
+
+This is a citation of paper:
+"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits in mixed forests after thinning. Ecosphere."
+
+
+# Within-cites
+
+[@Steege2018]
+
+[@Hiemstra2009]
+
+[@diggle1985kernel]
+
+[@baddeley2016adjusted]
+
+[@citeR]
+
+[@QGIS_software]
+
+## Bibliography
