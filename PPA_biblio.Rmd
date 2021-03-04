@@ -15,7 +15,7 @@ This is a citation of paper:
 
 [@mcintire2009beyond]
 
-[@ma2010spatial]
+[@ma2010spatial; @primicia2013effects]
 
 [@Wolf2005] 
 
@@ -24,6 +24,8 @@ This is a citation of paper:
 [@thebault2010stability; @walther2010community]
 
 [@tilman2018spatial]
+
+[@denslow1995disturbance; @dolanc2003effects; @yeo2006early]
 
 [@gratzer2004spatio]
 
@@ -80,6 +82,8 @@ This is a citation of paper:
 
 [@diggle2003introduction; @illian2008statistical]
 
+[[@diggle2003introduction]
+
 [@Baddeley2015]
 
 [@de2008seedlings]
@@ -116,6 +120,8 @@ This is a citation of paper:
 
 [@perry2008spatial; @shen2013quantifying; @pescador2020tales]
 
+[@Kitajima2000]
+
 [@solga2005nitrogen; @ackermann2012n2]
 
 [@stuiver2014impact]
@@ -125,5 +131,6 @@ This is a citation of paper:
 [@wiegand2009recruitment; @espinosa2016effects]
 
 [@hampe2008spatio; @batllori2009seedling]
+
 
 ## Bibliography
