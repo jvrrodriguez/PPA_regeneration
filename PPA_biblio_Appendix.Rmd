@@ -8,7 +8,7 @@ output: word_document
 ---
 
 This is a citation of paper:
-"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits in mixed forests after thinning. Ecosphere."
+"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits after thinning. Ecosphere."
 
 
 # Within-cites

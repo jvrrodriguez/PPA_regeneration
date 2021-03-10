@@ -8,14 +8,14 @@ output: word_document
 ---
 
 This is a citation of paper:
-"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits in mixed forests after thinning. Ecosphere."
+"Javier Rodríguez-Pérez, J. Bosco Imbert, Javier Peralta. Fine-scale environmental and density-dependent factors explain the spatial aggregation of tree recruits after thinning. Ecosphere."
 
 
 # Introduction
 
 [@mcintire2009beyond]
 
-[@ma2010spatial; @primicia2013effects]
+[@ma2010spatial; @primicia2013effects; @primicia2016influence; @GarciaSancet2017]
 
 [@Wolf2005] 
 
@@ -31,9 +31,9 @@ This is a citation of paper:
 
 [@oliver1996forest]
 
-# *
+## *
 
-[@ganey2011tree]
+[@battles2008climate; @ganey2011tree]
 
 [@barbier2008influence]
 
@@ -41,18 +41,18 @@ This is a citation of paper:
 
 [@perry2008spatial; @shen2013quantifying; @pescador2020tales]
 
-# *
+## *
 
 [@wiegand2014handbook]
 
 
-## Material and methods
+# Material and methods
 
-# Maps of environmental variables
+## Maps of environmental variables
 
 [@citeR]
 
-# Generalities of the point-pattern analysis
+## Generalities of the point-pattern analysis
 
 [@wiegand2004rings; @law2009ecological]
 
@@ -62,7 +62,7 @@ This is a citation of paper:
 
 [[@wiegand2004rings]
 
-# Summary statistics of spatial-point patterns
+## Summary statistics of spatial-point patterns
 
 [@Baddeley2015]
 
@@ -78,7 +78,7 @@ This is a citation of paper:
 
 [@illian2008statistical]
 
-# Analysis 1: Description of aggregation patterns of trees and recruits
+## Analysis 1: Description of aggregation patterns of trees and recruits
 
 [@diggle2003introduction; @illian2008statistical]
 
@@ -90,7 +90,8 @@ This is a citation of paper:
 
 [@wiegand2014handbook]
 
-# Analysis 2: Factors explaining the aggregation of recruits
+## Analysis 2: Factors explaining the aggregation of recruits
+
 [@Baddeley2015]
 
 [@berman1986testing]
@@ -98,9 +99,9 @@ This is a citation of paper:
 [@wiegand2014handbook]
 
 
-## Discussion
+# Discussion
 
-# Aggregation and association patterns of trees and recruits
+## Aggregation and association patterns of trees and recruits
 
 [@Wolf2005; @Franklin2010]
 
@@ -112,7 +113,7 @@ This is a citation of paper:
 
 [@andivia2018adult]
 
-# Factors explaining the aggregation of recruits
+## Factors explaining the aggregation of recruits
 
 [@wiegand2014handbook]
 
@@ -133,4 +134,4 @@ This is a citation of paper:
 [@hampe2008spatio; @batllori2009seedling]
 
 
-## Bibliography
+# Bibliography
