@@ -25,7 +25,7 @@ save.output <- TRUE
 Var.dens <- c("(Intercept)", "Treat30%",  "Dens.adult", "Dens.rec", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
 Var.env <- c("(Intercept)", "Treat30%", "Canopy", "CanOpen", "LAI", "DiffBelow", "DiffBelow.Yr", "N.Sunflecks", "Mdn.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Pter", "Rub", "Scl") #"MDT",  "MDS",  "Lad.var", "Lad.cv", "Lad.shan",
 
-save.output <- TRUE
+save.output <- FALSE
 
 #Encontrar una interaccion entre especies y ver si esto varia con el tiempo (variables ambientales
 #alfun factor que tenga una tendencia temporal
@@ -117,7 +117,7 @@ for (i in 1:length(Year)){
     geom_bar(stat="identity", color="black", position=position_dodge()) +
     labs(x="Treatment", y="Probability") + 
     geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9))
-  #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
+    #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
   
   
   if (i != length(Year)) {
@@ -134,16 +134,16 @@ for (i in 1:length(Year)){
     tukey.env <- tukey.env[c(2,5),]
     max.env <- max(sum.env.fate$mean + sum.env.fate$sd)
     
-    list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x=sum.env.fate$Treat, y=mean, fill=sum.env.fate$Treat)) + 
+    list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x=sum.env.fate$fate, y=mean, fill=sum.env.fate$fate)) + 
       geom_bar(stat="identity", color="black", position=position_dodge()) +
-      facet_grid(.~fate) + 
+      facet_grid(.~Treat) + 
       labs(x="", y="Prob. best model") + 
       scale_y_continuous(limits=c(0,max.env)) + 
       geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.env-0.01, xmin=c(1,1), xmax=c(2,2)) +
       geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.env, 4), aes(label = c(tukey.env$label[1], "",tukey.env$label[2], "")), data = tukey.env) + 
       ggtitle(paste0("Environmental factors // ", Year[i])) +
-      theme(plot.title = element_text(size=10))
+      theme(plot.title = element_text(size=10), axis.text.x = element_blank())
       #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
     sum.dens.fate <- sum.dens.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
@@ -152,16 +152,16 @@ for (i in 1:length(Year)){
     tukey.dens <- tukey.dens[c(2,5),]
     max.dens <- max(sum.dens.fate$mean + sum.dens.fate$sd/4)
     
-    list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x=sum.dens.fate$Treat, y=mean, fill=sum.dens.fate$Treat)) + 
+    list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x=sum.dens.fate$fate, y=mean, fill=sum.dens.fate$fate)) + 
       geom_bar(stat="identity", color="black", position=position_dodge()) +
-      facet_wrap(.~fate) + 
+      facet_wrap(.~Treat) + 
       labs(x="", y="Prob. best model") + 
-      scale_y_continuous(limits=c(0,max.dens)) + 
+      scale_y_continuous(limits=c(0, max.dens)) + 
       geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.dens-0.03, xmin=c(1,1), xmax=c(2,2)) +
       geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.dens, 4), aes(label = c(tukey.dens$label[1], "",tukey.dens$label[2], "")), data = tukey.dens) + 
       ggtitle(paste0("Density-dependent factors // ", Year[i])) +
-      theme(plot.title = element_text(size=10))
+      theme(plot.title = element_text(size=10), axis.text.x = element_blank())
       #title("Best Aggregation model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
   }
@@ -203,13 +203,16 @@ estimate.dens.plot2[estimate.dens.plot2 == "NA NA"] <- ""
 estimate.env.plot2 <- cbind(estimate.env.plot[,2:1], estimate.env.plot2)
 estimate.dens.plot2 <- cbind(estimate.dens.plot[,2:1], estimate.dens.plot2)
 
-write.table(estimate.env.plot2, sep = ",",
-          paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/estimates.env.Plot.txt"))
 
-write.table(estimate.dens.plot2, sep = ",",
-          paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/estimates.dens.Plot.txt"))
-
-
+if (save.output == T) {
+  
+  write.table(estimate.env.plot2, sep = ",",
+            paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/estimates.env.Plot.txt"))
+  
+  write.table(estimate.dens.plot2, sep = ",",
+            paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/estimates.dens.Plot.txt"))
+  
+}
   
 sum.env <- data.frame(Variable = Var.env, Year = rep(Year, each=length(Var.env)), estimate = estimate.env, p = p.env)
 
