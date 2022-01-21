@@ -48,13 +48,13 @@ range01 <- function(x){
 #convert to an hyperframe plots
 sizejuv <- 0.2 # umbral (m) para discriminar juvenil de plantula
 sizead <- 2 # umbral (m) para discriminar adulto de juvenil
-Year <- c(2008, 2009, 2010, 2011, 2012, 2013)
+Year <- c(2008, 2009, 2010, 2011, 2012, 2013)[1:4]
 nsim <- 199
 fit.gam = FALSE
-save.output <- FALSE
+save.output <- TRUE
 
 summary.year <- data.frame(); summary.plot <- summary.year; 
-summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.rec.Q <- summary.year
+summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.ad.Q <- summary.year
 
 
 for (j in 1:length(Year)) {
@@ -125,7 +125,7 @@ for (j in 1:length(Year)) {
     
     #Load environmental maps
     
-    source("~/Documentos/Datos NO publicados/BioIntForest/Analysis/function raster.as.im.R")
+    source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
     
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/MDS-MDT_A", i, ".RData"))
     im.MDTS <- normalize_stack(im.MDTS)
@@ -147,7 +147,7 @@ for (j in 1:length(Year)) {
       im.Understory$Rub$v <- ifelse(is.nan(im.Understory$Rub$v), 1,  im.Understory$Rub$v)
     }
     
-    source("~/Documentos/Datos NO publicados/BioIntForest/Analysis/function raster.as.im.R")
+    source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
     # ras.Understory <- normalize_stack(stack(sum(normalize_stack(ras.Understory))))
     # names(ras.Understory) <- "Understory"
     # im.Understory <- listof( Canopy=raster.as.im(ras.Understory))
@@ -155,10 +155,12 @@ for (j in 1:length(Year)) {
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Canopy_A", i, ".RData"))
     ras.Canopy <- stack(aggregate(ras.Canopy.join[[2]], fact=5, na.rm=TRUE))
     names(ras.Canopy) <- "Canopy"
-    im.Canopy <- normalize_stack(listof( Canopy=raster.as.im(ras.Canopy)))
+    # im.Canopy <- normalize_stack(listof( Canopy=raster.as.im(ras.Canopy)))
+    im.Canopy <- normalize_stack(im.Canopy)
     
-    load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Lad_A", i, ".RData"))
-    im.lad <- normalize_stack(im.lad)
+    #al final descartada esta variable
+    #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Lad_A", i, ".RData"))
+    #im.lad <- normalize_stack(im.lad)
     
     ras.all <- stack(normalize_stack(ras.Light), normalize_stack(ras.Understory), normalize_stack(ras.Canopy)) #ras.MDTS, ras.lad
     ras.matrix <- layerStats(ras.all,'pearson')$`pearson correlation coefficient`
@@ -424,7 +426,7 @@ for (j in 1:length(Year)) {
     # if (length(im.Understory) == 5) {
     
     data.sp$covs[[i]] <- listof(MDT = im.MDTS[[1]], MDS = im.MDTS[[2]],
-                                Lad.var = im.lad[[1]], Lad.cv= im.lad[[2]], Lad.shan = im.lad[[3]],
+                                #Lad.var = im.lad[[1]], Lad.cv= im.lad[[2]], Lad.shan = im.lad[[3]],
                                 CanOpen = im.Light[[1]], LAI = im.Light[[2]], DirectBelow = im.Light[[3]], DiffBelow = im.Light[[4]], DirectBelow.Yr = im.Light[[5]], DiffBelow.Yr = im.Light[[6]], N.Sunflecks = im.Light[[7]], Mdn.Sunflecks = im.Light[[8]], Max.Sunflecks = im.Light[[9]],
                                 Canopy = im.Canopy[[1]], 
                                 Fs = im.Understory[[1]], Hed = im.Understory[[2]], Pter = im.Understory[[3]], Rub = im.Understory[[4]], Scl = im.Understory[[5]],
@@ -600,6 +602,46 @@ for (j in 1:length(Year)) {
   par(old.par)
   
   
+  # Test only recruits ----------------------------------------------------
+  
+  cat("Test only recruits patterns \n")
+
+  L.E.rec <- list(); g.E.rec <- L.E.rec; kNN.E.rec <- L.E.rec; F.E.rec <- L.E.rec
+  L.E.rec.cat <- NULL; g.E.rec.cat <- NULL; kNN.E.rec.cat <- NULL; F.E.rec.cat <- NULL
+  
+  for (i in Plots) {
+    
+    #L.E[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Lest, r = seq(0,10,0.05), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
+    g.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), pcf, r = seq(0,4,0.02), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
+    kNN.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Gest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
+    #F.E[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Fest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
+    
+    #L.E.rec.cat <- cbind(L.E.rec[[i]]$r, L.E.rec.cat, ppp.cat(L.E.rec[[i]]))
+    g.E.rec.cat <- cbind(g.E.rec[[i]]$r, g.E.rec.cat, ppp.cat(g.E.rec[[i]]))
+    kNN.E.rec.cat <- cbind(kNN.E.rec[[i]]$r, kNN.E.rec.cat, ppp.cat(kNN.E.rec[[i]]))
+    #F.E.rec.cat <- cbind(F.E.rec[[i]]$r, F.E.rec.cat, ppp.cat(F.E.rec[[i]]))
+    
+  }
+  
+  #L.E.rec.ctrl <- pool(L.E.rec[[3]], L.E.rec[[4]], L.E.rec[[9]]); L.E.rec.thnn <- pool(L.E.rec[[2]], L.E.rec[[5]], L.E[[7]])
+  g.E.rec.ctrl <- pool(g.E.rec[[3]], g.E.rec[[4]], g.E.rec[[9]]); g.E.rec.thnn <- pool(g.E.rec[[2]], g.E.rec[[5]], g.E.rec[[7]])
+  kNN.E.rec.ctrl <- pool(kNN.E.rec[[3]], kNN.E.rec[[4]], kNN.E.rec[[9]]); kNN.E.rec.thnn <- pool(kNN.E.rec[[2]], kNN.E.rec[[5]], kNN.E.rec[[7]])
+  #F.E.rec.ctrl <- pool(F.E.rec[[3]], F.E.rec[[4]], F.E.rec[[9]]); F.E.rec.thnn <- pool(F.E.rec[[2]], F.E.rec[[5]], F.E.rec[[7]])
+  
+  par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  #plot(L.E.rec.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
+  plot(g.E.rec.ctrl, main = NULL, legend = F)
+  plot(kNN.E.rec.ctrl, main = NULL, legend = F)
+  #plot(F.E.rec.ctrl, main = NULL, legend = F)
+  #plot(L.E.rec.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
+  plot(g.E.rec.thnn, main = NULL, legend = F)
+  plot(kNN.E.rec.thnn, main = NULL, legend = F)
+  #plot(F.E.thnn, main = NULL, legend = F)
+  title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
+  old.par <- par(mfrow=c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
+  par(old.par)
+  
+  
   
   # Test Cluster (Thomas) process -------------------------------------------
   
@@ -638,7 +680,7 @@ for (j in 1:length(Year)) {
   
   Jdif <- function(X, ..., i) {
     
-    Jidot <- Jdot(X, ..., i = i)
+    Jidot <- Jdot(X, ..., i = i) #se selecciona generalmente la correccion de Ripley
     J <- Jest(X, ...)
     dif <- eval.fv(Jidot - J)
     return(dif)
@@ -716,7 +758,7 @@ for (j in 1:length(Year)) {
     g.E.size[[i]] <- alltypes(data.size$ppp[[i]], pcfdot, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
     kNN.E.size[[i]] <- alltypes(data.size$ppp[[i]], Gdot, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction="rs", title = NULL, savefuns=TRUE, savepatterns = TRUE)
     markcon.E.size[[i]] <- alltypes(data.size$ppp[[i]], markconnect, nsim = nsim, envelope = TRUE, title = NULL, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.size$ppp[[i]])))
-    Jdif.E.size[[i]] <- envelope(data.size$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, i = "Recruit",  savefuns=TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
+    Jdif.E.size[[i]] <- envelope(data.size$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, i = "Recruit", correction="rs", savefuns=TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
     
     #L.E.size.tmp <- do.call(cbind, lapply(L.E.size[[i]]$fns, ppp.cat))
     #colnames(L.E.size.tmp) <- apply(melt(t(L.E.size[[i]]$which))[-3], 1, paste, collapse="-")
@@ -845,7 +887,7 @@ for (j in 1:length(Year)) {
     for (i in Plots) {
       
       Jdif.E.fate.rec[[i]] <- envelope(data.fate.rec$ppp[[i]], Jdif, i="0", r = seq(0,1,0.01), nsim = nsim, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.fate.rec$ppp[[i]]))) 
-      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo="Tree", i="RcDead", j="RcSurv", r=seq(0, 8, le=51), nsim=nsim, nrank=5, correction="isotropic")
+      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo="Tree", i="RcDead", j="RcSurv", r=seq(0, 8, le=51), nsim=nsim, nrank=5, correction="Ripley")
       
       Jdif.E.fate.rec.cat <- cbind(Jdif.E.fate.rec[[i]]$r, Jdif.E.fate.rec.cat, ppp.cat(Jdif.E.fate.rec[[i]]))
       K012.E.fate.rec.i.cat <- cbind(K012.E.fate.rec.i[[i]]$k01$r, K012.E.fate.rec.i.cat, ppp.cat(K012.E.fate.rec.i[[i]]$k01))
@@ -1244,6 +1286,13 @@ for (j in 1:length(Year)) {
     g.E.thnn, kNN.E.thnn, 
     #F.E.thnn, 
     fit.clust, title.clus,
+    
+    #L.E.rec.cat, 
+    g.E.rec.cat, kNN.E.rec.cat, #F.E.rec.cat,
+    #L.E.rec.ctrl, 
+    g.E.rec.ctrl, kNN.E.rec.ctrl, #F.E.rec.ctrl, L.E.rec.thnn, 
+    g.E.rec.thnn, kNN.E.rec.thnn, 
+    #F.E.rec.thnn,
     
     #L.E.sp.cat, g.E.sp.cat, kNN.E.sp.cat, Jdif.E.sp.cat, markcon.E.sp.cat,
     #L.E.sp.ctrl, g.E.sp.ctrl, kNN.E.sp.ctrl, Jdif.E.sp.ctrl, L.E.sp.thnn, g.E.sp.thnn, kNN.E.sp.thnn, Jdif.E.sp.thnn, 

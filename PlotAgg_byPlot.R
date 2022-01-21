@@ -4,7 +4,7 @@ library(gridExtra)
 library(grid)
 
 Year <- 2007+1:4
-data <- c("g.E", "kNN.E", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
+data <- c("g.E.rec", "kNN.E", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%")
 Treat2 <-  c("20%", "Thinned", "Control", "Control", "Thinned", "20%", "Thinned", "20%", "Control")
 

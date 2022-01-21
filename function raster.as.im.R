@@ -1,5 +1,6 @@
 library(sp)
 library(raster)
+library(spatstat)
 
 # Function to convert raster to im (sp) file ------------------------------
 

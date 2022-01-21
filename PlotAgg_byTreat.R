@@ -3,10 +3,10 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 
-source("~/Documentos/Datos NO publicados/BioIntForest/Analysis/function quantumPlot.R")
+source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function quantumPlot.R")
 
 Year <- c(2008, 2009, 2010, 2011)
-data <- c("g.E", "kNN.E", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
+data <- c("g.E.rec", "kNN.E.rec", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
 y_stats <- list("g(r)", "D(r)", "Ji· (r) - J(r)", "Ji· (r) - J(r)", "Ji· (r) - J(r)", expression(K[012] (r)), "g(r)", "g(r)")
 log.data <- c(T, F, F, F, F, F, T, T)
 y_inter <- c(1, 0, 0, 0, 0, 0, 1, 1)

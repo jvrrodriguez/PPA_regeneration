@@ -25,7 +25,7 @@ save.output <- TRUE
 Var.dens <- c("(Intercept)", "Treat30%",  "Dens.adult", "Dens.rec", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
 Var.env <- c("(Intercept)", "Treat30%", "Canopy", "CanOpen", "LAI", "DiffBelow", "DiffBelow.Yr", "N.Sunflecks", "Mdn.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Pter", "Rub", "Scl") #"MDT",  "MDS",  "Lad.var", "Lad.cv", "Lad.shan",
 
-save.output <- FALSE
+save.output <- TRUE
 
 #Encontrar una interaccion entre especies y ver si esto varia con el tiempo (variables ambientales
 #alfun factor que tenga una tendencia temporal
@@ -137,7 +137,7 @@ for (i in 1:length(Year)){
     list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x=sum.env.fate$fate, y=mean, fill=sum.env.fate$fate)) + 
       geom_bar(stat="identity", color="black", position=position_dodge()) +
       facet_grid(.~Treat) + 
-      labs(x="", y="Prob. best model") + 
+      labs(x="", y=expression(paste("Pred. intensity ", lambda))) + 
       scale_y_continuous(limits=c(0,max.env)) + 
       geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.env-0.01, xmin=c(1,1), xmax=c(2,2)) +
@@ -155,7 +155,7 @@ for (i in 1:length(Year)){
     list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x=sum.dens.fate$fate, y=mean, fill=sum.dens.fate$fate)) + 
       geom_bar(stat="identity", color="black", position=position_dodge()) +
       facet_wrap(.~Treat) + 
-      labs(x="", y="Prob. best model") + 
+      labs(x="", y=expression(paste("Pred. intensity ", lambda))) + 
       scale_y_continuous(limits=c(0, max.dens)) + 
       geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.dens-0.03, xmin=c(1,1), xmax=c(2,2)) +
