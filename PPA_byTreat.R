@@ -3,13 +3,14 @@
 ##########################################
 
 library(shapefiles)
-library(spatstat)
+library(spatstat.core)
 library(spatstat.local)
 library(spatstat.utils)
 library(raster)
 #library(spatialEco) #https://github.com/jeffreyevans/spatialEco
 library(shar) #https://r-spatialecology.github.io/shar/
 library(ecespa)
+library(onpoint)
 library(splines)
 library(reshape2)
 
@@ -24,24 +25,24 @@ library(rasterVis)
 
 #datos con la informacion de posicion de las plantas
 setwd("~/Documentos/Datos NO publicados/BioIntForest/Data/Inventarios_floristicos")
-data.frond <- data.frame(read.table(file="plantulas_2008_2013.csv", header=T, sep=",",dec=".")) #data.frame(read.table(file="cruce_sombras_plantulas_2008_2011_JVR.csv", sep=";" ,dec=","))
-data.pinus <- data.frame(read.table(file="PS09Medidas pino 2009 con coordenadas.csv", header=T, sep=";",dec=","))
-data.pinus99 <- data.frame(read.table(file="Medidas pinos 1999.csv", header=T, sep=";",dec=","))
+data.frond <- data.frame(read.table(file = "plantulas_2008_2013.csv", header = T, sep = ",",dec = ".")) #data.frame(read.table(file="cruce_sombras_plantulas_2008_2011_JVR.csv", sep=";" ,dec=","))
+data.pinus <- data.frame(read.table(file = "PS09Medidas pino 2009 con coordenadas.csv", header = T, sep = ";",dec = ","))
+data.pinus99 <- data.frame(read.table(file = "Medidas pinos 1999.csv", header = T, sep = ";",dec = ","))
 
 #Treatment plots
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%") #ONLY 0% and 30%
 p.range.max_2013 <- c(NA, 7*2, 8*2, 6*2, 8*2, NA, 4*2, NA, 9*2) #para modificar el tamaño de la parcela (eje X) para el año 2013; he expandido un poco la parcela 9 para que incluya algun Fs adicional (sino el script no funciona)
 
-data.frond$SP2 <- ifelse(data.frond$SP=="Qi" | data.frond$SP=="Qir" | data.frond$SP=="Qic" | data.frond$SP=="Qi?", "Qi",
-                         ifelse(data.frond$SP=="Qh" | data.frond$SP=="Qhr", "Qh",
-                                ifelse(data.frond$SP=="Fs" | data.frond$SP=="Fsr", "Fs",NA)))
-data.frond$SP2<-as.factor(data.frond$SP2)
-data.frond$RES <- ifelse(data.frond$SP=="Qir" | data.frond$SP=="Qhr" | data.frond$SP=="Fsr", 1, 0)
+data.frond$SP2 <- ifelse(data.frond$SP == "Qi" | data.frond$SP == "Qir" | data.frond$SP == "Qic" | data.frond$SP == "Qi?", "Qi",
+                         ifelse(data.frond$SP == "Qh" | data.frond$SP == "Qhr", "Qh",
+                                ifelse(data.frond$SP == "Fs" | data.frond$SP == "Fsr", "Fs",NA)))
+data.frond$SP2 <- as.factor(data.frond$SP2)
+data.frond$RES <- ifelse(data.frond$SP == "Qir" | data.frond$SP == "Qhr" | data.frond$SP == "Fsr", 1, 0)
 
 range01 <- function(x){
   
   x <- ifelse(x == -9999, NA, x) 
-  x0 <- (x-min(x, na.rm=T))/(max(x, na.rm=T)-min(x, na.rm=T))
+  x0 <- (x - min(x, na.rm = T))/(max(x, na.rm = T) - min(x, na.rm = T))
   return(x0)
 }
 
@@ -57,11 +58,11 @@ summary.year <- data.frame(); summary.plot <- summary.year;
 summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.ad.Q <- summary.year
 
 
-for (j in 1:length(Year)) {
+for (j in 4:length(Year)) {
   
   cat("Analising year...", Year[j], "\n")
   
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".pdf"), width=10, height=7) #7, 5  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".pdf"), width = 10, height = 7) #7, 5  
   
   #reset lists for each year
   Plots <- unique(data.frond$PARCELA)
@@ -101,7 +102,7 @@ for (j in 1:length(Year)) {
     
     cat("Setting up Plot...", i, "\n")
     
-    data.plot <- subset(data.frond, PARCELA==i & SP2!="<NA>") 
+    data.plot <- subset(data.frond, PARCELA == i & SP2 != "<NA>") 
     
     #stantardize relative positions only for decidious trees
     data.plot$MAPX <- data.plot$MAPX - min(data.plot$MAPX)
@@ -111,8 +112,8 @@ for (j in 1:length(Year)) {
     
     if (Year[j] == 2013) p.range[2] <- p.range.max_2013[i]
     
-    data.pinus99.plot <- subset(data.pinus99, Parcela==paste0("A",i) & is.finite(DM))
-    data.pinus99.plot$Size <- rowMeans(cbind(data.pinus99.plot$P.MeanHt, data.pinus99.plot$A.MeanHt), na.rm =T)
+    data.pinus99.plot <- subset(data.pinus99, Parcela == paste0("A",i) & is.finite(DM))
+    data.pinus99.plot$Size <- rowMeans(cbind(data.pinus99.plot$P.MeanHt, data.pinus99.plot$A.MeanHt), na.rm = T)
     x <- data.pinus99.plot$DM[!is.nan(data.pinus99.plot$Size)]
     y <- data.pinus99.plot$Size[!is.nan(data.pinus99.plot$Size)]
     
@@ -120,7 +121,7 @@ for (j in 1:length(Year)) {
     m <- nls(y~a*x/(b+x)) 
     cor(y, predict(m))
     
-    data.pinus.plot <- subset(data.pinus, PARCELA==paste0("A",i))
+    data.pinus.plot <- subset(data.pinus, PARCELA == paste0("A",i))
     data.pinus.plot <- data.pinus.plot[!is.na(data.pinus.plot$Dn_NS_07) | !is.na(data.pinus.plot$Dn_EO_07),]
     
     #Load environmental maps
@@ -128,7 +129,7 @@ for (j in 1:length(Year)) {
     source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
     
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/MDS-MDT_A", i, ".RData"))
-    im.MDTS <- normalize_stack(im.MDTS)
+    #im.MDTS <- normalize_stack(im.MDTS)
     
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Light_A", i, ".RData"))
     im.Light <- normalize_stack(im.Light)
@@ -136,6 +137,9 @@ for (j in 1:length(Year)) {
     
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Understory_A", i, ".RData"))
     im.Understory <- normalize_stack(im.Understory)
+    # ras.Understory <- normalize_stack(stack(sum(normalize_stack(ras.Understory))))
+    # names(ras.Understory) <- "Understory"
+    # im.Understory <- listof( Canopy=raster.as.im(ras.Understory))
     
     if (is.null(im.Understory$Fs)) {
       im.tmp <- im.Understory$Hed 
@@ -146,37 +150,31 @@ for (j in 1:length(Year)) {
     if (names(table(is.nan(im.Understory$Rub$v))) == TRUE)  {
       im.Understory$Rub$v <- ifelse(is.nan(im.Understory$Rub$v), 1,  im.Understory$Rub$v)
     }
-    
-    source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
-    # ras.Understory <- normalize_stack(stack(sum(normalize_stack(ras.Understory))))
-    # names(ras.Understory) <- "Understory"
-    # im.Understory <- listof( Canopy=raster.as.im(ras.Understory))
-    
+
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Canopy_A", i, ".RData"))
-    ras.Canopy <- stack(aggregate(ras.Canopy.join[[2]], fact=5, na.rm=TRUE))
+    ras.Canopy <- stack(aggregate(ras.Canopy.join[[2]], fact = 5, na.rm = TRUE))
     names(ras.Canopy) <- "Canopy"
     # im.Canopy <- normalize_stack(listof( Canopy=raster.as.im(ras.Canopy)))
     im.Canopy <- normalize_stack(im.Canopy)
     
-    #al final descartada esta variable
     #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Lad_A", i, ".RData"))
     #im.lad <- normalize_stack(im.lad)
     
-    ras.all <- stack(normalize_stack(ras.Light), normalize_stack(ras.Understory), normalize_stack(ras.Canopy)) #ras.MDTS, ras.lad
-    ras.matrix <- layerStats(ras.all,'pearson')$`pearson correlation coefficient`
-    ras.matrix <- ifelse(is.finite(ras.matrix), ras.matrix, NA)
+    #ras.all <- stack(normalize_stack(ras.Light), normalize_stack(ras.Understory), normalize_stack(ras.Canopy)) #ras.MDTS, ras.lad
+    #ras.matrix <- layerStats(ras.all,'pearson')$`pearson correlation coefficient`
+    #ras.matrix <- ifelse(is.finite(ras.matrix), ras.matrix, NA)
     
-    library(corrplot)
-    corrplot(ras.matrix)
+    #library(corrplot)
+    #corrplot(ras.matrix)
     
     
     # Setup point data --------------------------------------------------------------
     
-    if (Year[j] < 2009){
+    if (Year[j] < 2009) {
       
       data.pinus.year <- data.frame(x = data.pinus.plot$X, y = data.pinus.plot$Y,
                                     SP = "Ps", 
-                                    SIZE = predict(m, newdata = data.frame(x = rowMeans(cbind(data.pinus.plot$Dn_NS_07, data.pinus.plot$Dn_EO_07), na.rm=T))),
+                                    SIZE = predict(m, newdata = data.frame(x = rowMeans(cbind(data.pinus.plot$Dn_NS_07, data.pinus.plot$Dn_EO_07), na.rm = T))),
                                     FATE = ifelse(is.na(data.pinus.plot$Muerto.07) | data.pinus.plot$Muerto.07 == 0, 1, 0))
       
     } else {
@@ -188,10 +186,10 @@ for (j in 1:length(Year)) {
                                     FATE = ifelse(is.na(data.pinus.plot.tmp$Muerto.09) | data.pinus.plot.tmp$Th_09 == 0, 1, 0))
     }
     
-    if (Year[j] == 2009){
+    if (Year[j] == 2009) {
       
       data.pinus.year <- data.frame(data.pinus.year, 
-                                    GROWTH =  round(data.pinus.plot.tmp$Dn_09 - rowMeans(cbind(data.pinus.plot.tmp$Dn_NS_07, data.pinus.plot.tmp$Dn_EO_07), na.rm=T), 1)) 
+                                    GROWTH =  round(data.pinus.plot.tmp$Dn_09 - rowMeans(cbind(data.pinus.plot.tmp$Dn_NS_07, data.pinus.plot.tmp$Dn_EO_07), na.rm = T), 1)) 
       data.pinus.year$GROWTH <- log(ifelse(data.pinus.year$GROWTH < 0, 0, data.pinus.year$GROWTH) + 1)
       
     } else {
@@ -200,16 +198,15 @@ for (j in 1:length(Year)) {
       
     }
     
-    
-    if (j != length(Year)){
+    if (j != length(Year)) {
       
       data.plot$Size <- data.plot[paste0("ALT",Year[j])][[1]]
-      data.sel <- data.plot[which(grepl("ALT", colnames(data.plot)))][, (j+1):length(Year)]
+      data.sel <- data.plot[which(grepl("ALT", colnames(data.plot)))][, (j + 1):length(Year)]
       
       if (!is.null(dim(data.sel))) {
         
-        data.plot$Size <- ifelse(rowSums(data.sel== 201.0 | data.sel == -9999.0 | is.na(data.plot$Size), na.rm=T) > 0, 
-                                 apply(data.sel, 1, FUN=min, na.rm=T), data.plot$Size)
+        data.plot$Size <- ifelse(rowSums(data.sel == 201.0 | data.sel == -9999.0 | is.na(data.plot$Size), na.rm = T) > 0, 
+                                 apply(data.sel, 1, FUN = min, na.rm = T), data.plot$Size)
         
       }
       
@@ -234,19 +231,19 @@ for (j in 1:length(Year)) {
       
       data.year <- with(data.year, 
                         ppp(x = x, y = y, marks = data.frame(SP = as.factor(SP), SIZE = log(SIZE + 1), FATE = FATE, GROWTH = GROWTH), 
-                            owin(xrange=c(p.range[1],p.range[2]), yrange=c(p.range[3],p.range[4]))))
+                            owin(xrange = c(p.range[1],p.range[2]), yrange = c(p.range[3],p.range[4]))))
       
-      data_tmp <- data.frame(x = data.year$x, y = data.year$y, species = data.year$marks$SP, size = data.year$marks$SIZE, shape = ifelse(data.year$marks$FATE=="0", 19, 1))
+      data_tmp <- data.frame(x = data.year$x, y = data.year$y, species = data.year$marks$SP, size = data.year$marks$SIZE, shape = ifelse(data.year$marks$FATE == "0", 19, 1))
       p <- ggplot(data_tmp, aes(x, y, colour = species, size = size)) + xlab("x coords") + ylab("y coords") + geom_point(shape = data_tmp$shape)
-      name <- paste("p",i,sep="_")
+      name <- paste("p",i,sep = "_")
       tmp <- list(p)
       map.Plots[[name]] <- tmp
       
       
       layout(matrix(c(1,1,2,3), 2, 2, byrow = FALSE), heights = c(3, 3), widths = c(3, 3))
       par(mar = c(3, 3, 3, 4))
-      plot(data.year$x,data.year$y,col=as.integer(data.year$marks$SP), 
-           cex = data.year$marks$SIZE, pch = ifelse(data.year$marks$FATE=="0", 19, 1), xlab = "x coords", ylab = "y coords", main = NULL)
+      plot(data.year$x,data.year$y,col = as.integer(data.year$marks$SP), 
+           cex = data.year$marks$SIZE, pch = ifelse(data.year$marks$FATE == "0", 19, 1), xlab = "x coords", ylab = "y coords", main = NULL)
       title(paste0("Plot A", i, "; Yr: ", Year[j], "; Th: ",Treat[i], "; n: ", data.year$n, "; Surv : ", round(sum(data.year$marks$FATE == "1") / data.year$n,3)), line = -1, cex.main = 1, outer = TRUE)
       
     } else {
@@ -262,18 +259,18 @@ for (j in 1:length(Year)) {
       
       data.year <- with(data.year, 
                         ppp(x = x, y = y, marks = data.frame(SP = as.factor(SP), SIZE = log(SIZE + 1), GROWTH = GROWTH), 
-                            owin(xrange=c(p.range[1],p.range[2]), yrange=c(p.range[3],p.range[4]))))
+                            owin(xrange = c(p.range[1],p.range[2]), yrange = c(p.range[3],p.range[4]))))
       
       data_tmp <- data.frame(x = data.year$x, y = data.year$y, species = data.year$marks$SP, size = data.year$marks$SIZE, shape = 21)
       p <- ggplot(data_tmp, aes(x, y, colour = species, size = size)) + 
-        xlab("x coords") + ylab("y coords") + geom_point(shape = data_tmp$shape) + scale_size(range=c(0,1))
-      name <- paste("p",i,sep="_")
+        xlab("x coords") + ylab("y coords") + geom_point(shape = data_tmp$shape) + scale_size(range = c(0,1))
+      name <- paste("p",i,sep = "_")
       tmp <- list(p)
       map.Plots[[name]] <- tmp
       
       layout(matrix(c(1,1,2,3), 2, 2, byrow = FALSE), heights = c(2, 2), widths = c(2, 2))
       par(mar = c(3, 3, 3, 4))
-      plot(data.year$x,data.year$y,col=as.integer(data.year$marks$SP), 
+      plot(data.year$x,data.year$y,col = as.integer(data.year$marks$SP), 
            cex = data.year$marks$SIZE, xlab = "x coords", ylab = "y coords", main = NULL)
       title(paste0("Plot A", i, "; Yr: ", Year[j], "; Th: ",Treat[i], "; n: ", data.year$n), line = -1, cex.main = 1, outer = TRUE)
       
@@ -281,41 +278,41 @@ for (j in 1:length(Year)) {
     
     Q <- quadratcount(data.year, nx = p.range[2]/2, ny = p.range[4]/2)
     quadrat.test(data.year, nx = p.range[2]/2, ny = p.range[4]/2)
-    plot(Q, add = TRUE, cex = 0.5, col="grey")
+    plot(Q, add = TRUE, cex = 0.5, col = "grey")
     
     par(mar = c(3, 0, 3, 3))
-    hist(array(Q), xlab="density plants",  main="")
+    hist(array(Q), xlab = "density plants",  main = "")
     par(mar = c(3, 0, 3, 3))
-    hist(data.year$marks$SIZE, xlab="log(height+1)", main="")
-    abline (v=log(sizejuv + 1), col="grey"); abline(v=log(sizead + 1), col="grey")
+    hist(data.year$marks$SIZE, xlab = "log(height+1)", main = "")
+    abline(v = log(sizejuv + 1), col = "grey"); abline(v = log(sizead + 1), col = "grey")
     layout(matrix(c(1), 1, 1, byrow = FALSE))
     
     
     # Arrange datasets to analyse
     
-    dens.all$im[[i]] <- density(data.year, sigma=bw.diggle(data.year))
+    dens.all$im[[i]] <- density(data.year, sigma = bw.diggle(data.year))
     
     data.sp$ppp[[i]] <- cut.ppp(data.year, "SP")
     
-    dens.sp$im[[i]] <- density(split(data.sp$ppp[[i]]), sigma=bw.diggle(data.sp$ppp[[i]]))
+    dens.sp$im[[i]] <- density(split(data.sp$ppp[[i]]), sigma = bw.diggle(data.sp$ppp[[i]]))
     
-    data.size$ppp[[i]] <- cut.ppp(data.year, "SIZE", breaks=c(-0.1, log(sizejuv + 1), log(sizead + 1), Inf), labels=c("Recruit", "Recruit", "Adult"))
+    data.size$ppp[[i]] <- cut.ppp(data.year, "SIZE", breaks = c(-0.1, log(sizejuv + 1), log(sizead + 1), Inf), labels = c("Recruit", "Recruit", "Adult"))
     
     data.size$ppp[[i]]$marks <- as.factor(as.character(data.size$ppp[[i]]$marks))
     plot(split(data.size$ppp[[i]]), main = paste0("Plot A", i, "; Year = ", Year[j]))
     
-    dens.size$im[[i]] <- density(split(data.size$ppp[[i]]), sigma=bw.diggle(data.size$ppp[[i]]))
+    dens.size$im[[i]] <- density(split(data.size$ppp[[i]]), sigma = bw.diggle(data.size$ppp[[i]]))
     
     data.size.c$ppp[[i]] <- subset.ppp(data.year, select = "SIZE")
     
-    dens.size.c$im[[i]] <- density(data.size.c$ppp[[i]], sigma=bw.diggle(data.size.c$ppp[[i]]))
+    dens.size.c$im[[i]] <- density(data.size.c$ppp[[i]], sigma = bw.diggle(data.size.c$ppp[[i]]))
     
     data.sp.rec$ppp[[i]] <- data.sp$ppp[[i]][which(data.size$ppp[[i]]$marks != "Adult"),]
     data.sp.rec.Fs$ppp[[i]] <- data.sp.rec$ppp[[i]][which(data.sp.rec$ppp[[i]]$marks == "Fs"),]
     data.sp.rec.Qh$ppp[[i]] <- data.sp.rec$ppp[[i]][which(data.sp.rec$ppp[[i]]$marks == "Qh"),]
     data.sp.rec.Qi$ppp[[i]] <- data.sp.rec$ppp[[i]][which(data.sp.rec$ppp[[i]]$marks == "Qi"),]
     
-    data.size.rec$ppp[[i]] <- data.size$ppp[[i]][which(data.size$ppp[[i]]$marks!= "Adult"),]
+    data.size.rec$ppp[[i]] <- data.size$ppp[[i]][which(data.size$ppp[[i]]$marks != "Adult"),]
     data.size.c.rec$ppp[[i]] <- data.size.c$ppp[[i]][which(data.size$ppp[[i]]$marks != "Adult"),]
     
     if (sum(is.na(data.size$ppp[[i]]$marks)) > 0) {
@@ -327,26 +324,26 @@ for (j in 1:length(Year)) {
     data.size.c$ppp[[i]] <- data.size.c$ppp[[i]][!is.na(as.numeric(data.size.c$ppp[[i]]$marks)),]
     
     data.size.c.ad$ppp[[i]] <- data.size.c$ppp[[i]][which(data.size$ppp[[i]]$marks == "Adult"),]
-    dens.size.c.ad$im[[i]] <- density(data.size.c.ad$ppp[[i]], sigma=bw.diggle(data.size.c.ad$ppp[[i]]))
-    dens.size.c.rec$im[[i]] <- density(data.size.c.rec$ppp[[i]], sigma=bw.diggle(data.size.c.rec$ppp[[i]]))
-    dens.sp.rec$im[[i]] <- density(split(data.sp.rec$ppp[[i]]), sigma=bw.diggle(data.sp.rec$ppp[[i]]))
+    dens.size.c.ad$im[[i]] <- density(data.size.c.ad$ppp[[i]], sigma = bw.diggle(data.size.c.ad$ppp[[i]]))
+    dens.size.c.rec$im[[i]] <- density(data.size.c.rec$ppp[[i]], sigma = bw.diggle(data.size.c.rec$ppp[[i]]))
+    dens.sp.rec$im[[i]] <- density(split(data.sp.rec$ppp[[i]]), sigma = bw.diggle(data.sp.rec$ppp[[i]]))
     
     library(vegan)
     
     im.diversity <- function(x, y, z){
       
-      results<-matrix(NA,nrow(x),nrow(y)); results2 <- results
+      results <- matrix(NA,nrow(x),nrow(y)); results2 <- results
       thr <- c(median(x), median(y), median(z))
       
-      for (i in 1:nrow(x)){
+      for (i in 1:nrow(x)) {
         
-        for (j in 1:nrow(y)){
+        for (j in 1:nrow(y)) {
           
-          r1<-x[i,j]
-          r2<-y[i,j]
-          r3<-z[i,j]
-          results[i,j]<-sum(c(ifelse(r1 >= thr[1], 1, 0), ifelse(r2 >= thr[2], 1, 0), ifelse(r3 >= thr[3], 1, 0)))  ## Example function
-          results2[i,j]<-diversity(c(abs(r1) , abs(r2) , abs(r3)), index = "shan")  ## Example function
+          r1 <- x[i,j]
+          r2 <- y[i,j]
+          r3 <- z[i,j]
+          results[i,j] <- sum(c(ifelse(r1 >= thr[1], 1, 0), ifelse(r2 >= thr[2], 1, 0), ifelse(r3 >= thr[3], 1, 0)))  ## Example function
+          results2[i,j] <- diversity(c(abs(r1) , abs(r2) , abs(r3)), index = "shan")  ## Example function
           
         }
         
@@ -410,13 +407,13 @@ for (j in 1:length(Year)) {
       
     }
     
-    if (Year[j] == 2009){
+    if (Year[j] == 2009) {
       
       data.growth$ppp[[i]] <- data.year
       data.growth$ppp[[i]]$marks <- data.growth$ppp[[i]]$marks[4][[1]]
       data.growth.ad$ppp[[i]] <- data.growth$ppp[[i]][data.size$ppp[[i]]$marks == "Adult" & data.sp$ppp[[i]]$marks == "Ps",]
       
-      data.fate.ad$ppp[[i]]<- data.fate$ppp[[i]][data.size$ppp[[i]]$marks == "Adult" & data.sp$ppp[[i]]$marks == "Ps",]
+      data.fate.ad$ppp[[i]] <- data.fate$ppp[[i]][data.size$ppp[[i]]$marks == "Adult" & data.sp$ppp[[i]]$marks == "Ps",]
       
     }
     
@@ -542,7 +539,7 @@ for (j in 1:length(Year)) {
     names(raster.tmp) <- c(paste0("Plot_", c(3,4,9,2,5,7)))
     print( 
       gplot(raster.tmp) + 
-        geom_tile(aes(fill = value)) + guides(fill=guide_legend(title=var.all[i])) +
+        geom_tile(aes(fill = value)) + guides(fill = guide_legend(title = var.all[i])) +
         facet_wrap(~ variable) +
         scale_fill_gradientn(colours = rev(terrain.colors(225))) +
         coord_equal() + theme_classic() 
@@ -556,12 +553,12 @@ for (j in 1:length(Year)) {
   
   cat("Test overall patterns \n")
   
-  ppp.cat <- function (data) {
+  ppp.cat <- function(data) {
     
-    if (is.null(data$obs) == F) output <- ifelse (data$obs < data$lo, - 1, ifelse (data$obs > data$hi, 1, 0))
-    if (is.null(data$iso) == F) output <- ifelse (data$iso < data$lo, - 1, ifelse (data$iso > data$hi, 1, 0))
+    if (is.null(data$obs) == F) output <- ifelse(data$obs < data$lo, -1, ifelse(data$obs > data$hi, 1, 0))
+    if (is.null(data$iso) == F) output <- ifelse(data$iso < data$lo, -1, ifelse(data$iso > data$hi, 1, 0))
     
-    return (output)
+    return(output)
     
   }
   
@@ -571,8 +568,8 @@ for (j in 1:length(Year)) {
   for (i in Plots) {
     
     #L.E[[i]] <- envelope(data.size$ppp[[i]], Lest, r = seq(0,10,0.05), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-    g.E[[i]] <- envelope(data.size$ppp[[i]], pcf, r = seq(0,4,0.02), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-    kNN.E[[i]] <- envelope(data.size$ppp[[i]], Gest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
+    g.E[[i]] <- envelope(data.size$ppp[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, fix.n = TRUE, correction = "Ripley", savefuns = TRUE, savepatterns = TRUE)
+    kNN.E[[i]] <- envelope(data.size$ppp[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, fix.n = TRUE, correction = "rs", savefuns = TRUE, savepatterns = TRUE)
     #F.E[[i]] <- envelope(data.size$ppp[[i]], Fest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
     
     #L.E.cat <- cbind(L.E[[i]]$r, L.E.cat, ppp.cat(L.E[[i]]))
@@ -588,7 +585,7 @@ for (j in 1:length(Year)) {
   #F.E.ctrl <- pool(F.E[[3]], F.E[[4]], F.E[[9]]); F.E.thnn <- pool(F.E[[2]], F.E[[5]], F.E[[7]])
   
   
-  par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
   plot(g.E.ctrl, main = NULL, legend = F)
   plot(kNN.E.ctrl, main = NULL, legend = F)
@@ -598,7 +595,7 @@ for (j in 1:length(Year)) {
   plot(kNN.E.thnn, main = NULL, legend = F)
   #plot(F.E.thnn, main = NULL, legend = F)
   title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
-  old.par <- par(mfrow=c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
+  old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
   par(old.par)
   
   
@@ -611,9 +608,9 @@ for (j in 1:length(Year)) {
   
   for (i in Plots) {
     
-    #L.E[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Lest, r = seq(0,10,0.05), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-    g.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), pcf, r = seq(0,4,0.02), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-    kNN.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Gest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
+    #L.E[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Lest, r = seq(0,10,0.05), nsim = nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
+    g.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), pcf, r = seq(0,4,0.02), nsim = nsim, fix.n = TRUE, correction = "Ripley", savefuns = TRUE, savepatterns = TRUE)
+    kNN.E.rec[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Gest, r = seq(0,1,0.01), nsim = nsim, fix.n = TRUE, correction = "rs", savefuns = TRUE, savepatterns = TRUE)
     #F.E[[i]] <- envelope(unmark(data.sp.rec$ppp[[i]]), Fest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
     
     #L.E.rec.cat <- cbind(L.E.rec[[i]]$r, L.E.rec.cat, ppp.cat(L.E.rec[[i]]))
@@ -628,7 +625,7 @@ for (j in 1:length(Year)) {
   kNN.E.rec.ctrl <- pool(kNN.E.rec[[3]], kNN.E.rec[[4]], kNN.E.rec[[9]]); kNN.E.rec.thnn <- pool(kNN.E.rec[[2]], kNN.E.rec[[5]], kNN.E.rec[[7]])
   #F.E.rec.ctrl <- pool(F.E.rec[[3]], F.E.rec[[4]], F.E.rec[[9]]); F.E.rec.thnn <- pool(F.E.rec[[2]], F.E.rec[[5]], F.E.rec[[7]])
   
-  par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.rec.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
   plot(g.E.rec.ctrl, main = NULL, legend = F)
   plot(kNN.E.rec.ctrl, main = NULL, legend = F)
@@ -638,7 +635,7 @@ for (j in 1:length(Year)) {
   plot(kNN.E.rec.thnn, main = NULL, legend = F)
   #plot(F.E.thnn, main = NULL, legend = F)
   title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
-  old.par <- par(mfrow=c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
+  old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
   par(old.par)
   
   
@@ -649,16 +646,16 @@ for (j in 1:length(Year)) {
   fit.clust <- list()
   title.clus <- data.frame(R = double(), mu = double() )
   
-  par(mfrow=c(2,3), mar=c(0.5, 0.5, 0.2, 0.2), oma = c(4, 4, 0.2, 0.2))
+  par(mfrow = c(2,3), mar = c(0.5, 0.5, 0.2, 0.2), oma = c(4, 4, 0.2, 0.2))
   
   for (i in Plots) {
     
-    fit.clust[[i]] <- kppm(unmark(data.sp.rec$ppp[[i]]) ~ 1, "Thomas", statistic="pcf", data = data.sp$covs[[i]])
+    fit.clust[[i]] <- kppm(unmark(data.sp.rec$ppp[[i]]) ~ 1, "Thomas", statistic = "pcf", data = data.sp$covs[[i]])
     title.clus[i,1] <- fit.clust[[i]]$modelpar[2]
     title.clus[i,2] <- fit.clust[[i]]$mu
     
     #L.E.t <- envelope(fit.clust[[i]], Lest, nsim = nsim, correction = "Ripley")
-    g.E.t <- envelope(fit.clust[[i]], pcf, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction = "Ripley")
+    g.E.t <- envelope(fit.clust[[i]], pcf, r = seq(0,1,0.01), nsim = nsim, fix.n = TRUE, correction = "Ripley")
     #kNN.E.t <- envelope(fit.clust[[i]] , Gest, nsim=nsim, fix.n=TRUE, correction="rs")
     #F.E.t <- envelope(fit.clust[[i]], Fest, nsim=nsim, fix.n=TRUE, correction="rs")
     
@@ -749,54 +746,64 @@ for (j in 1:length(Year)) {
   
   cat("Test differences between sizes \n")
   
-  L.E.size <- list(); g.E.size <- L.E.size; kNN.E.size <- L.E.size; Jdif.E.size <- L.E.size; markcon.E.size <- L.E.size
-  L.E.size.cat <- NULL; g.E.size.cat <- NULL; kNN.E.size.cat <- NULL; Jdif.E.size.cat <- NULL; markcon.E.size.cat <- NULL
+  L.E.size <- list(); g.E.size <- L.E.size; kNN.E.size <- L.E.size; ac.E.size <- L.E.size; Jdif.E.size <- L.E.size; markcon.E.size <- L.E.size
+  L.E.size.cat <- NULL; g.E.size.cat <- NULL; kNN.E.size.cat <- NULL; ac.E.size.cat <- NULL; Jdif.E.size.cat <- NULL; markcon.E.size.cat <- NULL
   
   for (i in Plots) {
     
     #L.E.size[[i]] <- alltypes(data.size$ppp[[i]], Ldot, r = seq(0,10,0.05), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    g.E.size[[i]] <- alltypes(data.size$ppp[[i]], pcfdot, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    kNN.E.size[[i]] <- alltypes(data.size$ppp[[i]], Gdot, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction="rs", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    markcon.E.size[[i]] <- alltypes(data.size$ppp[[i]], markconnect, nsim = nsim, envelope = TRUE, title = NULL, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.size$ppp[[i]])))
-    Jdif.E.size[[i]] <- envelope(data.size$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, i = "Recruit", correction="rs", savefuns=TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
+    g.E.size[[i]] <- alltypes(data.size$ppp[[i]], pcfdot, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction = "Ripley", title = NULL, savefuns = TRUE, savepatterns = TRUE)
+    kNN.E.size[[i]] <- alltypes(data.size$ppp[[i]], Gdot, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction = "rs", title = NULL, savefuns = TRUE, savepatterns = TRUE)
+    markcon.E.size[[i]] <- alltypes(data.size$ppp[[i]], markconnect, nsim = nsim, envelope = TRUE, title = NULL, savefuns = TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
+    
+    #https://r-spatialecology.github.io/onpoint/reference/simulate_antecedent_conditions.html#ref-examples
+    null_model_AC <- simulate_antecedent_conditions(data.size$ppp[[i]], i = "Recruit", j = "Adult", nsim = nsim, heterogenous = FALSE, savefuns = TRUE, savepatterns = TRUE)
+    ac.E.size[[i]] <- envelope(Y = data.size$ppp[[i]], fun = pcf, nsim = nsim, correction = "Ripley", simulate = null_model_AC, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE)
+
+    ## Para calcular random labelling pero nos sugirieron que no es adecuado como modelo nulo
+    ### Jdif.E.size[[i]] <- envelope(data.size$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, i = "Recruit", correction="rs", savefuns=TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
     
     #L.E.size.tmp <- do.call(cbind, lapply(L.E.size[[i]]$fns, ppp.cat))
     #colnames(L.E.size.tmp) <- apply(melt(t(L.E.size[[i]]$which))[-3], 1, paste, collapse="-")
     #L.E.size.cat <- cbind(L.E.size[[i]]$fns[[1]]$r, L.E.size.cat, L.E.size.tmp)
     
     g.E.size.tmp <- do.call(cbind, lapply(g.E.size[[i]]$fns, ppp.cat))
-    colnames(g.E.size.tmp) <- apply(melt(t(g.E.size[[i]]$which))[-3], 1, paste, collapse="-")
+    colnames(g.E.size.tmp) <- apply(melt(t(g.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     g.E.size.cat <- cbind(g.E.size[[i]]$fns[[1]]$r, g.E.size.cat, g.E.size.tmp)
     
     kNN.E.size.tmp <- do.call(cbind, lapply(kNN.E.size[[i]]$fns, ppp.cat))
-    colnames(kNN.E.size.tmp) <- apply(melt(t(kNN.E.size[[i]]$which))[-3], 1, paste, collapse="-")
+    colnames(kNN.E.size.tmp) <- apply(melt(t(kNN.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     kNN.E.size.cat <- cbind(kNN.E.size[[i]]$fns[[1]]$r, kNN.E.size.cat, kNN.E.size.tmp)
     
     markcon.E.size.tmp <- do.call(cbind, lapply(markcon.E.size[[i]]$fns, ppp.cat))
-    colnames(markcon.E.size.tmp) <- apply(melt(t(markcon.E.size[[i]]$which))[-3], 1, paste, collapse="-")
+    colnames(markcon.E.size.tmp) <- apply(melt(t(markcon.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     markcon.E.size.cat <- cbind(markcon.E.size[[i]]$fns[[1]]$r, markcon.E.size.cat, markcon.E.size.tmp)
     
-    Jdif.E.size.cat <- cbind(Jdif.E.size[[i]]$r, Jdif.E.size.cat, ppp.cat(Jdif.E.size[[i]]))
+    ac.E.size.cat <- cbind(ac.E.size[[i]]$r, ac.E.size.cat, ppp.cat(ac.E.size[[i]]))
+    #Jdif.E.size.cat <- cbind(Jdif.E.size[[i]]$r, Jdif.E.size.cat, ppp.cat(Jdif.E.size[[i]]))
     
   }
   
   #L.E.size.ctrl <- pool(L.E.size[[3]], L.E.size[[4]], L.E.size[[9]]); L.E.size.thnn <- pool(L.E.size[[2]], L.E.size[[5]], L.E.size[[7]])
   g.E.size.ctrl <- pool(g.E.size[[3]], g.E.size[[4]], g.E.size[[9]]); g.E.size.thnn <- pool(g.E.size[[2]], g.E.size[[5]], g.E.size[[7]])
   kNN.E.size.ctrl <- pool(kNN.E.size[[3]], kNN.E.size[[4]], kNN.E.size[[9]]); kNN.E.size.thnn <- pool(kNN.E.size[[2]], kNN.E.size[[5]], kNN.E.size[[7]])
-  Jdif.E.size.ctrl <- pool(Jdif.E.size[[3]], Jdif.E.size[[4]], Jdif.E.size[[9]]); Jdif.E.size.thnn <- pool(Jdif.E.size[[2]], Jdif.E.size[[5]], Jdif.E.size[[7]])
+  ac.E.size.ctrl <- pool(ac.E.size[[3]], ac.E.size[[4]], ac.E.size[[9]]); ac.E.size.thnn <- pool(ac.E.size[[2]], ac.E.size[[5]], ac.E.size[[7]])
+  #Jdif.E.size.ctrl <- pool(Jdif.E.size[[3]], Jdif.E.size[[4]], Jdif.E.size[[9]]); Jdif.E.size.thnn <- pool(Jdif.E.size[[2]], Jdif.E.size[[5]], Jdif.E.size[[7]])
   if (j != length(Year)) { markcon.E.size.ctrl <- pool(markcon.E.size[[3]], markcon.E.size[[4]], markcon.E.size[[9]]); markcon.E.size.thnn <- pool(markcon.E.size[[2]], markcon.E.size[[5]], markcon.E.size[[7]])}
   
   #plot(L.E.size.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.size.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.size.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(Jdif.E.size.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  if (j != length(Year)) { plot(markcon.E.size.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL) }
+  plot(g.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(ac.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  #plot(Jdif.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  if (j != length(Year)) { plot(markcon.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
   
   #plot(L.E.size.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.size.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.size.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(Jdif.E.size.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  if (j != length(Year)) { plot(markcon.E.size.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL) }
+  plot(g.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(ac.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  #plot(Jdif.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  if (j != length(Year)) { plot(markcon.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
   
   
   
@@ -807,12 +814,12 @@ for (j in 1:length(Year)) {
   markcor.E.size.c.ad <- list(); markcor.E.size.c.rec <- markcor.E.size.c.ad
   markcor.E.size.c.ad.cat <- NULL; markcor.E.size.c.rec.cat <- NULL
   
-  if (j != length(Year)){
+  if (j != length(Year)) {
     
     for (i in Plots) {
       
-      markcor.E.size.c.ad[[i]] <- envelope(data.size.c.ad$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE)
-      markcor.E.size.c.rec[[i]] <- envelope(data.size.c.rec$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE) 
+      markcor.E.size.c.ad[[i]] <- envelope(data.size.c.ad$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE)
+      markcor.E.size.c.rec[[i]] <- envelope(data.size.c.rec$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE) 
       
       markcor.E.size.c.ad.cat <- cbind(markcor.E.size.c.ad[[i]]$r, markcor.E.size.c.ad.cat, ppp.cat(markcor.E.size.c.ad[[i]]))
       markcor.E.size.c.rec.cat <- cbind(markcor.E.size.c.rec[[i]]$r, markcor.E.size.c.rec.cat, ppp.cat(markcor.E.size.c.rec[[i]]))
@@ -822,7 +829,7 @@ for (j in 1:length(Year)) {
     markcor.E.size.c.ad.ctrl <- pool(markcor.E.size.c.ad[[3]], markcor.E.size.c.ad[[4]], markcor.E.size.c.ad[[9]]); markcor.E.size.c.ad.thnn <- pool(markcor.E.size.c.ad[[2]], markcor.E.size.c.ad[[5]], markcor.E.size.c.ad[[7]])
     markcor.E.size.c.rec.ctrl <- pool(markcor.E.size.c.rec[[3]], markcor.E.size.c.rec[[4]], markcor.E.size.c.rec[[9]]); markcor.E.size.c.rec.thnn <- pool(markcor.E.size.c.rec[[2]], markcor.E.size.c.rec[[5]], markcor.E.size.c.rec[[7]])
     
-    par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+    par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
     plot(markcor.E.size.c.ad.ctrl, legend = F)
     plot(markcor.E.size.c.ad.thnn, legend = F)
     plot(markcor.E.size.c.rec.ctrl, legend = F)
@@ -836,8 +843,8 @@ for (j in 1:length(Year)) {
   
   for (i in Plots) {
     
-    Jdif.E.rec[[i]] <- envelope(data.sp.rec$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim=nsim, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.sp.rec$ppp[[i]])))
-    Jdif.E.size.c.rec[[i]] <- envelope(data.size.c.rec$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE) 
+    Jdif.E.rec[[i]] <- envelope(data.sp.rec$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, savefuns = TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.sp.rec$ppp[[i]])))
+    Jdif.E.size.c.rec[[i]] <- envelope(data.size.c.rec$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE) 
     #markcon.E.sp[[i]] <- alltypes(data.sp$ppp[[i]], markconnect, nsim = nsim, envelope = TRUE, title = NULL, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.sp$ppp[[i]])))
     #Jdif.E.sp.rec[[i]] <- alltypes(data.sp.rec$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.sp.rec$ppp[[i]])))
     
@@ -860,7 +867,7 @@ for (j in 1:length(Year)) {
   if (j != length(Year)) { Jdif.E.size.c.rec.ctrl <- pool(Jdif.E.size.c.rec[[3]], Jdif.E.size.c.rec[[4]], Jdif.E.size.c.rec[[9]]); Jdif.E.size.c.rec.thnn <- pool(Jdif.E.size.c.rec[[2]], Jdif.E.size.c.rec[[5]], Jdif.E.size.c.rec[[7]]) }
   
   
-  par(mfrow=c(2,1), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  par(mfrow = c(2,1), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   plot(Jdif.E.rec.ctrl, legend = F)
   plot(Jdif.E.rec.thnn, legend = F)
   
@@ -882,12 +889,12 @@ for (j in 1:length(Year)) {
   Jdif.E.fate.rec.ctrl <- NULL; Jdif.E.fate.rec.thnn <- NULL
   K012.E.fate.rec.i.ctrl <- NULL; K012.E.fate.rec.i.thnn <- NULL
   
-  if (j != length(Year)){
+  if (j != length(Year)) {
     
     for (i in Plots) {
       
-      Jdif.E.fate.rec[[i]] <- envelope(data.fate.rec$ppp[[i]], Jdif, i="0", r = seq(0,1,0.01), nsim = nsim, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.fate.rec$ppp[[i]]))) 
-      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo="Tree", i="RcDead", j="RcSurv", r=seq(0, 8, le=51), nsim=nsim, nrank=5, correction="Ripley")
+      Jdif.E.fate.rec[[i]] <- envelope(data.fate.rec$ppp[[i]], Jdif, i = "0", r = seq(0,1,0.01), nsim = nsim, savefuns = TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.fate.rec$ppp[[i]]))) 
+      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo = "Tree", i = "RcDead", j = "RcSurv", r = seq(0, 8, le = 51), nsim = nsim, nrank = 5, correction = "Ripley")
       
       Jdif.E.fate.rec.cat <- cbind(Jdif.E.fate.rec[[i]]$r, Jdif.E.fate.rec.cat, ppp.cat(Jdif.E.fate.rec[[i]]))
       K012.E.fate.rec.i.cat <- cbind(K012.E.fate.rec.i[[i]]$k01$r, K012.E.fate.rec.i.cat, ppp.cat(K012.E.fate.rec.i[[i]]$k01))
@@ -897,15 +904,15 @@ for (j in 1:length(Year)) {
     Jdif.E.fate.rec.ctrl <- pool(Jdif.E.fate.rec[[3]], Jdif.E.fate.rec[[4]], Jdif.E.fate.rec[[9]]); Jdif.E.fate.rec.thnn <- pool(Jdif.E.fate.rec[[2]], Jdif.E.fate.rec[[5]], Jdif.E.fate.rec[[7]])
     K012.E.fate.rec.i.ctrl <- pool(K012.E.fate.rec.i[[3]]$k01, K012.E.fate.rec.i[[4]]$k01, K012.E.fate.rec.i[[9]]$k01); K012.E.fate.rec.i.thnn <- pool.fv(K012.E.fate.rec.i[[2]]$k01, K012.E.fate.rec.i[[5]]$k01, K012.E.fate.rec.i[[7]]$k01)
     
-    par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
-    plot(Jdif.E.fate.rec.ctrl, main= NULL, legend = F)
-    plot(Jdif.E.fate.rec.thnn, main= NULL, legend = F)
+    par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+    plot(Jdif.E.fate.rec.ctrl, main = NULL, legend = F)
+    plot(Jdif.E.fate.rec.thnn, main = NULL, legend = F)
     
     col.trans <- hsv(1, 1, 1, 0)
-    plot(K012.E.fate.rec.i.ctrl, sqrt(./pi)-r~r, ylab=expression(L[12]), main= NULL, legend = F, 
+    plot(K012.E.fate.rec.i.ctrl, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F, 
          col = c(col.trans, col.trans, col.trans, col.trans, col.trans, col.trans, "grey","black","grey"),
          lty = c(0, 0, 0, 0, 0, 0, 3, 1, 3))
-    plot(K012.E.fate.rec.i.thnn, sqrt(./pi)-r~r, ylab=expression(L[12]), main= NULL, legend = F, 
+    plot(K012.E.fate.rec.i.thnn, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F, 
          col = c(col.trans, col.trans, col.trans, col.trans, col.trans, col.trans, "grey","black","grey"),
          lty = c(0, 0, 0, 0, 0 , 0, 3, 1, 3))
     title(paste0("Year ", Year[j], " // Distance-dependent fate of recruits"), line = -1, cex.main = 1, outer = TRUE)
@@ -923,7 +930,7 @@ for (j in 1:length(Year)) {
     
     for (i in Plots) {
       
-      markcor.E.growth.ad[[i]] <- envelope(data.growth.ad$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE) 
+      markcor.E.growth.ad[[i]] <- envelope(data.growth.ad$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE) 
       
       markcor.E.growth.ad.cat <- cbind(markcor.E.growth.ad[[i]]$r, markcor.E.growth.ad.cat, ppp.cat(markcor.E.growth.ad[[i]]))
       
@@ -1023,8 +1030,8 @@ for (j in 1:length(Year)) {
     data.sp.rec$Scl[[i]] <- data.sp$covs[[i]]$Scl
     
     #L.E.env[[i]] <- envelope(fit.env[[i]], Lest, r = seq(0,10,0.05), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    g.E.env[[i]] <- envelope(fit.env[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    kNN.E.env[[i]] <- envelope(fit.env[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction="rs", title = NULL, savefuns=TRUE, savepatterns = TRUE)
+    g.E.env[[i]] <- envelope(fit.env[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction = "Ripley", title = NULL, savefuns = TRUE, savepatterns = TRUE)
+    kNN.E.env[[i]] <- envelope(fit.env[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction = "rs", title = NULL, savefuns = TRUE, savepatterns = TRUE)
     #F.E.env[[i]] <- envelope(fit.env[[i]], Fest, r = seq(0,1,0.01), nsim=nsim, envelope = TRUE, correction="rs", title = NULL, savefuns=TRUE, savepatterns = TRUE)
     
     #L.E.env.cat <- cbind(L.E.env[[i]]$r, L.E.env.cat, ppp.cat(L.E.env[[i]]))
@@ -1050,7 +1057,7 @@ for (j in 1:length(Year)) {
   names(raster.tmp) <- c(paste0("Plot_", c(3,4,9,2,5,7)))
   print( 
     gplot(raster.tmp) + 
-      geom_tile(aes(fill = value)) + guides(fill=guide_legend(title="Prob.")) +
+      geom_tile(aes(fill = value)) + guides(fill = guide_legend(title = "Prob.")) +
       facet_wrap(~ variable) +
       scale_fill_gradientn(colours = rev(terrain.colors(225))) +
       coord_equal() + theme_classic() 
@@ -1067,24 +1074,24 @@ for (j in 1:length(Year)) {
   sum.env.sp <- pred.env.sp[!is.na(pred.env.sp$Sp),] %>%
     group_by(Sp, Treat) %>%
     summarise(
-      n=n(),
-      mean=mean(pred, na.rm=T),
-      sd=sd(pred, na.rm=T)
+      n = n(),
+      mean = mean(pred, na.rm = T),
+      sd = sd(pred, na.rm = T)
     ) %>%
-    mutate( se=sd/sqrt(n))  %>%
-    mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+    mutate( se = sd/sqrt(n))  %>%
+    mutate( ic = se * qt((1 - 0.05)/2 + .5, n - 1))
   
   if (j != length(Year)) {
     
     sum.env.fate <- pred.env.fate[!is.na(pred.env.fate$fate),] %>%
       group_by(fate, Treat) %>%
       summarise(
-        n=n(),
-        mean=mean(pred, na.rm=T),
-        sd=sd(pred, na.rm=T)
+        n = n(),
+        mean = mean(pred, na.rm = T),
+        sd = sd(pred, na.rm = T)
       ) %>%
-      mutate( se=sd/sqrt(n))  %>%
-      mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+      mutate( se = sd/sqrt(n))  %>%
+      mutate( ic = se * qt((1 - 0.05)/2 + .5, n - 1))
     
   }
   
@@ -1093,14 +1100,14 @@ for (j in 1:length(Year)) {
   kNN.E.env.ctrl <- pool(kNN.E.env[[3]], kNN.E.env[[4]], kNN.E.env[[9]]); kNN.E.env.thnn <- pool(kNN.E.env[[2]], kNN.E.env[[5]], kNN.E.env[[7]])
   #F.E.env.ctrl <- pool(F.E.env[[3]], F.E.env[[4]], F.E.env[[9]]); FN.E.env.thnn <- pool(F.E.env[[2]], F.E.env[[5]], F.E.env[[7]])
   
-  par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.env.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.env.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.env.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
+  plot(g.E.env.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.env.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   
   #plot(L.E.env.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.env.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.env.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
+  plot(g.E.env.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.env.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   par(old.par)
   
   if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + DiffBelow.Yr + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id) #MDT + MDS + Lad.var + Lad.cv + Lad.shan + 
@@ -1120,9 +1127,9 @@ for (j in 1:length(Year)) {
   estimates.env.red = as_tibble(d) %>% mutate_if(is.numeric, ~sprintf("%.4f",.))
   grid.table(estimates.env.red)
   
-  res <- residuals(fit.env.red, type="pearson")
-  smor <- with(hyperframe(res=res), Smooth(res, sigma=4))
-  plot(smor, equal.ribbon=TRUE, main = "Residuals environment")
+  res <- residuals(fit.env.red, type = "pearson")
+  smor <- with(hyperframe(res = res), Smooth(res, sigma = 4))
+  plot(smor, equal.ribbon = TRUE, main = "Residuals environment")
   
   
   
@@ -1148,7 +1155,7 @@ for (j in 1:length(Year)) {
   for (i in Plots) {
     
     if (fit.gam == F) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Dens.adult + Dens.rec + Dens.size.rec + Dens.rich.rec + Dens.shan.rec, data = data.sp$covs[[i]])
-    if (fit.gam == T) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3), use.gam=TRUE, data = data.sp$covs[[i]])
+    if (fit.gam == T) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
     fit.dens[[i]] <- step(fit.dens.full, trace = 0)
     title.dens[[i]] <- as.character(fit.dens[[i]]$trend)[[2]]
@@ -1177,8 +1184,8 @@ for (j in 1:length(Year)) {
     data.sp.rec$Dens.shan.rec[[i]] <- data.sp$covs[[i]]$Dens.shan.rec
     
     #L.E.dens[[i]] <- envelope(fit.dens[[i]], Lest, r = seq(0,10,0.05), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    g.E.dens[[i]] <- envelope(fit.dens[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction="Ripley", title = NULL, savefuns=TRUE, savepatterns = TRUE)
-    kNN.E.dens[[i]] <- envelope(fit.dens[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction="rs", title = NULL, savefuns=TRUE, savepatterns = TRUE)
+    g.E.dens[[i]] <- envelope(fit.dens[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, envelope = TRUE, correction = "Ripley", title = NULL, savefuns = TRUE, savepatterns = TRUE)
+    kNN.E.dens[[i]] <- envelope(fit.dens[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, correction = "rs", title = NULL, savefuns = TRUE, savepatterns = TRUE)
     
     #L.E.dens.cat <- cbind(L.E.dens[[i]]$r, L.E.dens.cat, ppp.cat(L.E.dens[[i]]))
     g.E.dens.cat <- cbind(g.E.dens[[i]]$r, g.E.dens.cat, ppp.cat(g.E.dens[[i]]))
@@ -1203,7 +1210,7 @@ for (j in 1:length(Year)) {
   names(raster.tmp) <- c(paste0("Plot_", c(3,4,9,2,5,7)))
   print( 
     gplot(raster.tmp) + 
-      geom_tile(aes(fill = value)) + guides(fill=guide_legend(title="Prob.")) +
+      geom_tile(aes(fill = value)) + guides(fill = guide_legend(title = "Prob.")) +
       facet_wrap(~ variable) +
       scale_fill_gradientn(colours = rev(terrain.colors(225))) +
       coord_equal() + theme_classic() 
@@ -1221,24 +1228,24 @@ for (j in 1:length(Year)) {
   sum.dens.sp <- pred.dens.sp[!is.na(pred.dens.sp$Sp),] %>%
     group_by(Sp, Treat) %>%
     summarise(
-      n=n(),
-      mean=mean(pred, na.rm=T),
-      sd=sd(pred, na.rm=T)
+      n = n(),
+      mean = mean(pred, na.rm = T),
+      sd = sd(pred, na.rm = T)
     ) %>%
-    mutate( se=sd/sqrt(n))  %>%
-    mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+    mutate( se = sd/sqrt(n))  %>%
+    mutate( ic = se * qt((1 - 0.05)/2 + .5, n - 1))
   
   if (j != length(Year)) {
     
     sum.dens.fate <- pred.dens.fate[!is.na(pred.dens.fate$fate),] %>%
       group_by(fate, Treat) %>%
       summarise(
-        n=n(),
-        mean=mean(pred, na.rm=T),
-        sd=sd(pred, na.rm=T)
+        n = n(),
+        mean = mean(pred, na.rm = T),
+        sd = sd(pred, na.rm = T)
       ) %>%
-      mutate( se=sd/sqrt(n))  %>%
-      mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+      mutate( se = sd/sqrt(n))  %>%
+      mutate( ic = se * qt((1 - 0.05)/2 + .5, n - 1))
     
   }
   
@@ -1300,9 +1307,9 @@ for (j in 1:length(Year)) {
     #L.E.size.cat, 
     g.E.size.cat, kNN.E.size.cat, Jdif.E.size.cat, markcon.E.size.cat,
     #L.E.size.ctrl, 
-    g.E.size.ctrl, kNN.E.size.ctrl, Jdif.E.size.ctrl, 
+    g.E.size.ctrl, kNN.E.size.ctrl, ac.E.size.ctrl, #Jdif.E.size.ctrl, 
     #L.E.size.thnn, 
-    g.E.size.thnn, kNN.E.size.thnn, Jdif.E.size.thnn,
+    g.E.size.thnn, kNN.E.size.thnn, ac.E.size.thnn, #Jdif.E.size.thnn,
     markcon.E.size.ctrl, #markcon.E.sp.thnn, 
     
     markcor.E.size.c.ad, markcor.E.size.c.rec, Jdif.E.rec, Jdif.E.sp.rec, Jdif.E.size.c.rec, markcon.E.sp,
@@ -1343,6 +1350,6 @@ for (j in 1:length(Year)) {
     berman.dens, var.dens.Plot,
     
     compress = TRUE,
-    file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".RData"))
+    file = paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".RData"))
   
 }

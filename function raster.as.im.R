@@ -1,16 +1,18 @@
 library(sp)
 library(raster)
-library(spatstat)
+library(spatstat.geom)
 
 # Function to convert raster to im (sp) file ------------------------------
 
 raster.as.im <- function(im) {
+  
   r <- raster::res(im)
   orig <- sp::bbox(im)[, 1] + 0.5 * r
   dm <- dim(im)[2:1]
   xx <- unname(orig[1] + cumsum(c(0, rep(r[1], dm[1] - 1))))
   yy <- unname(orig[2] + cumsum(c(0, rep(r[2], dm[2] - 1))))
-  return(spatstat::im(matrix(raster::values(im), ncol = dm[1], 
+  
+  return(spatstat.geom::im(matrix(raster::values(im), ncol = dm[1], 
                              nrow = dm[2], byrow = TRUE)[dm[2]:1, ], 
                       xcol = xx, yrow = yy))
 }
@@ -21,9 +23,9 @@ raster.as.im <- function(im) {
 
 #unction to normalize stacks
 
-normalize_stack <- function (x) {
+normalize_stack <- function(x) {
   
-  range01.raster <- function(x) { (x-min(x, na.rm = T))/(max(x, na.rm = T)-min(x, na.rm = T)) }
+  range01.raster <- function(x) { (x - min(x, na.rm = T))/(max(x, na.rm = T) - min(x, na.rm = T)) }
   
   if (is.im(x[[1]]) == TRUE) {
     
@@ -45,9 +47,11 @@ normalize_stack <- function (x) {
       
     } else {
       
-      values(ls[[i]]) <- range01.raster(values(ls[[i]]))
+      ls[[i]]$v <- range01.raster(ls[[i]]$v)
       
     }
+    
+    if (unique(is.na(ls[[i]]$v)) == TRUE) ls[[i]]$v <- 0
     
   }
   
