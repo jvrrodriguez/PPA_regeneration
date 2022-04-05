@@ -58,7 +58,7 @@ summary.year <- data.frame(); summary.plot <- summary.year;
 summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.ad.Q <- summary.year
 
 
-for (j in 4:length(Year)) {
+for (j in 1:length(Year)) {
   
   cat("Analising year...", Year[j], "\n")
   
@@ -97,6 +97,8 @@ for (j in 4:length(Year)) {
   
   data.sp.list <- list()
   
+  matrix.env <- list() #para almacenar las matrices de correlaciones de las variables
+  matrix.dens <- list()
   
   for (i in Plots) {
     
@@ -160,13 +162,12 @@ for (j in 4:length(Year)) {
     #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Lad_A", i, ".RData"))
     #im.lad <- normalize_stack(im.lad)
     
-    #ras.all <- stack(normalize_stack(ras.Light), normalize_stack(ras.Understory), normalize_stack(ras.Canopy)) #ras.MDTS, ras.lad
-    #ras.matrix <- layerStats(ras.all,'pearson')$`pearson correlation coefficient`
-    #ras.matrix <- ifelse(is.finite(ras.matrix), ras.matrix, NA)
+    ras.all <- stack((ras.Light), (ras.Understory), (ras.Canopy)) #ras.MDTS, ras.lad
+    matrix.env[[i]] <- layerStats(ras.all,'pearson', na.rm = T)$`pearson correlation coefficient`
+    matrix.env[[i]] <- ifelse(is.finite(matrix.env[[i]]), matrix.env[[i]], NA)
     
-    #library(corrplot)
-    #corrplot(ras.matrix)
-    
+    library(corrplot)
+    corrplot(matrix.env[[i]])
     
     # Setup point data --------------------------------------------------------------
     
@@ -418,6 +419,15 @@ for (j in 4:length(Year)) {
     }
     
     
+    ras.all <- stack(raster(dens.all$im[[i]]), raster(dens.size$im[[i]]["Adult"][[1]]), raster(dens.size$im[[i]]["Recruit"][[1]]), raster(dens.size.c$im[[i]]), raster(dens.size.c.rec$im[[i]]),
+          raster(dens.sp$im[[i]]["Fs"][[1]]), raster(dens.sp$im[[i]]["Qh"][[1]]), raster(dens.sp$im[[i]]["Qi"][[1]]), raster(dens.sp.rec.rich$im[[i]]), raster(dens.sp.rec.shan$im[[i]]))
+    
+    names(ras.all) <- c("Dens", "Dens.adult", "Dens.rec", "Dens.size", "Dens.size.rec", "Dens.Fs.rec", "Dens.Qh.rec", "Dens.Qi.rec","Dens.rich.rec", "Dens.shan.rec")   
+
+    matrix.dens[[i]] <- layerStats(ras.all,'pearson', na.rm = T)$`pearson correlation coefficient`
+    matrix.dens[[i]] <- ifelse(is.finite(matrix.dens[[i]]), matrix.dens[[i]], NA)
+    
+    
     # Setup covariates
     
     # if (length(im.Understory) == 5) {
@@ -510,8 +520,8 @@ for (j in 4:length(Year)) {
   
   # Generate summary plots for supplementary material
   
-  prow <- plot_grid(map.Plots$p_3[[1]] + theme(legend.position="none"), map.Plots$p_4[[1]] + theme(legend.position="none"), map.Plots$p_9[[1]]+ theme(legend.position="none"), 
-                    map.Plots$p_2[[1]] + theme(legend.position="none"), map.Plots$p_5[[1]] + theme(legend.position="none"), map.Plots$p_7[[1]] + theme(legend.position="none"),
+  prow <- plot_grid(map.Plots$p_3[[1]] + theme(legend.position = "none"), map.Plots$p_4[[1]] + theme(legend.position = "none"), map.Plots$p_9[[1]] + theme(legend.position = "none"), 
+                    map.Plots$p_2[[1]] + theme(legend.position = "none"), map.Plots$p_5[[1]] + theme(legend.position = "none"), map.Plots$p_7[[1]] + theme(legend.position = "none"),
                     align = 'vh',
                     labels = c("a)", "b)", "c)", "d)", "e)", "f)"),
                     hjust = -1)
@@ -529,8 +539,8 @@ for (j in 4:length(Year)) {
   
   library(rasterVis)
   
-  var.env <- c("Canopy", "CanOpen", "LAI", "DiffBelow", "DiffBelow.Yr", "N.Sunflecks", "Mdn.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Rub", "Pter", "Scl")
-  var.dens <- c("Dens.adult", "Dens.rec", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
+  var.env <- c("Canopy", "CanOpen", "LAI", "DiffBelow", "N.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Rub", "Pter", "Scl")
+  var.dens <- c("Dens.adult", "Dens.rec", "Dens.rich.rec", "Dens.shan.rec")
   var.all <- c(var.env, var.dens)
   
   for (i in 1:length(var.all)) {
@@ -580,8 +590,10 @@ for (j in 4:length(Year)) {
   }
   
   #L.E.ctrl <- pool(L.E[[3]], L.E[[4]], L.E[[9]]); L.E.thnn <- pool(L.E[[2]], L.E[[5]], L.E[[7]])
-  g.E.ctrl <- pool(g.E[[3]], g.E[[4]], g.E[[9]]); g.E.thnn <- pool(g.E[[2]], g.E[[5]], g.E[[7]])
-  kNN.E.ctrl <- pool(kNN.E[[3]], kNN.E[[4]], kNN.E[[9]]); kNN.E.thnn <- pool(kNN.E[[2]], kNN.E[[5]], kNN.E[[7]])
+  g.E.ctrl <- pool(g.E[[3]], g.E[[4]], g.E[[9]])
+  g.E.thnn <- pool(g.E[[2]], g.E[[5]], g.E[[7]])
+  kNN.E.ctrl <- pool(kNN.E[[3]], kNN.E[[4]], kNN.E[[9]])
+  kNN.E.thnn <- pool(kNN.E[[2]], kNN.E[[5]], kNN.E[[7]])
   #F.E.ctrl <- pool(F.E[[3]], F.E[[4]], F.E[[9]]); F.E.thnn <- pool(F.E[[2]], F.E[[5]], F.E[[7]])
   
   
@@ -605,6 +617,7 @@ for (j in 4:length(Year)) {
 
   L.E.rec <- list(); g.E.rec <- L.E.rec; kNN.E.rec <- L.E.rec; F.E.rec <- L.E.rec
   L.E.rec.cat <- NULL; g.E.rec.cat <- NULL; kNN.E.rec.cat <- NULL; F.E.rec.cat <- NULL
+  g.E.rec.gof <- NULL
   
   for (i in Plots) {
     
@@ -618,12 +631,28 @@ for (j in 4:length(Year)) {
     kNN.E.rec.cat <- cbind(kNN.E.rec[[i]]$r, kNN.E.rec.cat, ppp.cat(kNN.E.rec[[i]]))
     #F.E.rec.cat <- cbind(F.E.rec[[i]]$r, F.E.rec.cat, ppp.cat(F.E.rec[[i]]))
     
+    g.E.rec.interval <- c(min(g.E.rec.cat[,1][ppp.cat(g.E.rec[[i]]) != 0], na.rm = T), max(g.E.rec.cat[,1][ppp.cat(g.E.rec[[i]]) != 0], na.rm = T))
+    g.E.rec.test <- dclf.test(g.E.rec[[i]], rinterval = g.E.rec.interval)
+    g.E.rec.gof <- rbind(g.E.rec.gof, 
+                         data.frame(Plot = i, r.min = g.E.rec.interval[1], r.max = g.E.rec.interval[2], g.E.rec.test$statistic[1], p.value = g.E.rec.test$p.value))
+    
   }
   
   #L.E.rec.ctrl <- pool(L.E.rec[[3]], L.E.rec[[4]], L.E.rec[[9]]); L.E.rec.thnn <- pool(L.E.rec[[2]], L.E.rec[[5]], L.E[[7]])
-  g.E.rec.ctrl <- pool(g.E.rec[[3]], g.E.rec[[4]], g.E.rec[[9]]); g.E.rec.thnn <- pool(g.E.rec[[2]], g.E.rec[[5]], g.E.rec[[7]])
-  kNN.E.rec.ctrl <- pool(kNN.E.rec[[3]], kNN.E.rec[[4]], kNN.E.rec[[9]]); kNN.E.rec.thnn <- pool(kNN.E.rec[[2]], kNN.E.rec[[5]], kNN.E.rec[[7]])
+  g.E.rec.ctrl <- pool(g.E.rec[[3]], g.E.rec[[4]], g.E.rec[[9]], savefuns = TRUE)
+  g.E.rec.thnn <- pool(g.E.rec[[2]], g.E.rec[[5]], g.E.rec[[7]], savefuns = TRUE)
+  
+  kNN.E.rec.ctrl <- pool(kNN.E.rec[[3]], kNN.E.rec[[4]], kNN.E.rec[[9]])
+  kNN.E.rec.thnn <- pool(kNN.E.rec[[2]], kNN.E.rec[[5]], kNN.E.rec[[7]])
   #F.E.rec.ctrl <- pool(F.E.rec[[3]], F.E.rec[[4]], F.E.rec[[9]]); F.E.rec.thnn <- pool(F.E.rec[[2]], F.E.rec[[5]], F.E.rec[[7]])
+  
+  g.E.rec.interval <- as.numeric(colMeans(g.E.rec.gof[2:3]))
+  g.E.rec.ctrl.test <- dclf.test(g.E.rec.ctrl, rinterval = g.E.rec.interval)
+  g.E.rec.thnn.test <- dclf.test(g.E.rec.thnn, rinterval = g.E.rec.interval)
+  g.E.rec.gof <- rbind(g.E.rec.gof, 
+                       data.frame(Plot = "Ctrl", r.min = g.E.rec.interval[1], r.max = g.E.rec.interval[2], g.E.rec.ctrl.test$statistic[1], p.value = g.E.rec.ctrl.test$p.value),
+                       data.frame(Plot = "Thnn", r.min = g.E.rec.interval[1], r.max = g.E.rec.interval[2], g.E.rec.thnn.test$statistic[1], p.value = g.E.rec.thnn.test$p.value))
+  
   
   par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.rec.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
@@ -746,8 +775,9 @@ for (j in 4:length(Year)) {
   
   cat("Test differences between sizes \n")
   
-  L.E.size <- list(); g.E.size <- L.E.size; kNN.E.size <- L.E.size; ac.E.size <- L.E.size; Jdif.E.size <- L.E.size; markcon.E.size <- L.E.size
-  L.E.size.cat <- NULL; g.E.size.cat <- NULL; kNN.E.size.cat <- NULL; ac.E.size.cat <- NULL; Jdif.E.size.cat <- NULL; markcon.E.size.cat <- NULL
+  L.E.size <- list(); g.E.size <- L.E.size; kNN.E.size <- L.E.size; g.E.ac <- L.E.size; Jdif.E.size <- L.E.size; markcon.E.size <- L.E.size
+  L.E.size.cat <- NULL; g.E.size.cat <- NULL; kNN.E.size.cat <- NULL; g.E.ac.cat <- NULL; Jdif.E.size.cat <- NULL; markcon.E.size.cat <- NULL
+  g.E.size.gof <- NULL; g.E.ac.gof <- NULL
   
   for (i in Plots) {
     
@@ -758,7 +788,7 @@ for (j in 4:length(Year)) {
     
     #https://r-spatialecology.github.io/onpoint/reference/simulate_antecedent_conditions.html#ref-examples
     null_model_AC <- simulate_antecedent_conditions(data.size$ppp[[i]], i = "Recruit", j = "Adult", nsim = nsim, heterogenous = FALSE, savefuns = TRUE, savepatterns = TRUE)
-    ac.E.size[[i]] <- envelope(Y = data.size$ppp[[i]], fun = pcf, nsim = nsim, correction = "Ripley", simulate = null_model_AC, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE)
+    g.E.ac[[i]] <- envelope(Y = data.size$ppp[[i]], fun = pcf, nsim = nsim, correction = "Ripley", simulate = null_model_AC, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE)
 
     ## Para calcular random labelling pero nos sugirieron que no es adecuado como modelo nulo
     ### Jdif.E.size[[i]] <- envelope(data.size$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, i = "Recruit", correction="rs", savefuns=TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.size$ppp[[i]])))
@@ -771,6 +801,16 @@ for (j in 4:length(Year)) {
     colnames(g.E.size.tmp) <- apply(melt(t(g.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     g.E.size.cat <- cbind(g.E.size[[i]]$fns[[1]]$r, g.E.size.cat, g.E.size.tmp)
     
+    g.E.size.interval1 <- c(min(g.E.size.cat[,1][g.E.size.tmp[,1] != 0], na.rm = T), max(g.E.size.cat[,1][g.E.size.tmp[,1] != 0], na.rm = T))
+    if (is.infinite(g.E.size.interval1[1])) g.E.size.interval1 <- c(min(g.E.size.cat[,1]), max(g.E.size.cat[,1]))
+    g.E.size.interval2 <- c(min(g.E.size.cat[,1][g.E.size.tmp[,2] != 0], na.rm = T), max(g.E.size.cat[,1][g.E.size.tmp[,2] != 0], na.rm = T))
+    if (is.infinite(g.E.size.interval2[1])) g.E.size.interval2 <- c(min(g.E.size.cat[,1]), max(g.E.size.cat[,1]))
+    g.E.size.test1 <- dclf.test(g.E.size[[i]][[1]][[1]], rinterval = g.E.size.interval1)
+    g.E.size.test2 <- dclf.test(g.E.size[[i]][[1]][[2]], rinterval = g.E.size.interval2)
+    g.E.size.gof <- rbind(g.E.size.gof, 
+                          data.frame(Plot = i, Class = dimnames(g.E.size[[i]][[2]])[[1]][1], r.min = g.E.size.interval1[1], r.max = g.E.size.interval1[2], g.E.size.test1$statistic[1], p.value = g.E.size.test1$p.value),
+                          data.frame(Plot = i, Class = dimnames(g.E.size[[i]][[2]])[[1]][2], r.min = g.E.size.interval2[1], r.max = g.E.size.interval2[2], g.E.size.test2$statistic[1], p.value = g.E.size.test2$p.value))
+    
     kNN.E.size.tmp <- do.call(cbind, lapply(kNN.E.size[[i]]$fns, ppp.cat))
     colnames(kNN.E.size.tmp) <- apply(melt(t(kNN.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     kNN.E.size.cat <- cbind(kNN.E.size[[i]]$fns[[1]]$r, kNN.E.size.cat, kNN.E.size.tmp)
@@ -779,31 +819,67 @@ for (j in 4:length(Year)) {
     colnames(markcon.E.size.tmp) <- apply(melt(t(markcon.E.size[[i]]$which))[-3], 1, paste, collapse = "-")
     markcon.E.size.cat <- cbind(markcon.E.size[[i]]$fns[[1]]$r, markcon.E.size.cat, markcon.E.size.tmp)
     
-    ac.E.size.cat <- cbind(ac.E.size[[i]]$r, ac.E.size.cat, ppp.cat(ac.E.size[[i]]))
+    g.E.ac.cat <- cbind(g.E.ac[[i]]$r, g.E.ac.cat, ppp.cat(g.E.ac[[i]]))
+    
+    g.E.ac.interval <- c(min(g.E.ac.cat[,1][ppp.cat(g.E.ac[[i]]) != 0], na.rm = T), max(g.E.ac.cat[,1][ppp.cat(g.E.ac[[i]]) != 0], na.rm = T))
+    g.E.ac.test <- dclf.test(g.E.ac[[i]], rinterval = g.E.ac.interval)
+    g.E.ac.gof <- rbind(g.E.ac.gof, 
+                        data.frame(Plot = i, r.min = g.E.ac.interval[1], r.max = g.E.rec.interval[2], g.E.ac.test$statistic[1], p.value = g.E.ac.test$p.value))
+    
     #Jdif.E.size.cat <- cbind(Jdif.E.size[[i]]$r, Jdif.E.size.cat, ppp.cat(Jdif.E.size[[i]]))
     
   }
   
   #L.E.size.ctrl <- pool(L.E.size[[3]], L.E.size[[4]], L.E.size[[9]]); L.E.size.thnn <- pool(L.E.size[[2]], L.E.size[[5]], L.E.size[[7]])
-  g.E.size.ctrl <- pool(g.E.size[[3]], g.E.size[[4]], g.E.size[[9]]); g.E.size.thnn <- pool(g.E.size[[2]], g.E.size[[5]], g.E.size[[7]])
-  kNN.E.size.ctrl <- pool(kNN.E.size[[3]], kNN.E.size[[4]], kNN.E.size[[9]]); kNN.E.size.thnn <- pool(kNN.E.size[[2]], kNN.E.size[[5]], kNN.E.size[[7]])
-  ac.E.size.ctrl <- pool(ac.E.size[[3]], ac.E.size[[4]], ac.E.size[[9]]); ac.E.size.thnn <- pool(ac.E.size[[2]], ac.E.size[[5]], ac.E.size[[7]])
+  g.E.size.ctrl <- pool(g.E.size[[3]], g.E.size[[4]], g.E.size[[9]])
+  g.E.size.ctrl1 <- pool(g.E.size[[3]][[1]][[1]], g.E.size[[4]][[1]][[1]], g.E.size[[9]][[1]][[1]], savefuns = TRUE)
+  g.E.size.ctrl2 <- pool(g.E.size[[3]][[1]][[2]], g.E.size[[4]][[1]][[2]], g.E.size[[9]][[1]][[2]], savefuns = TRUE)
+  
+  g.E.size.thnn <- pool(g.E.size[[2]], g.E.size[[5]], g.E.size[[7]])
+  g.E.size.thnn1 <- pool(g.E.size[[2]][[1]][[1]], g.E.size[[5]][[1]][[1]], g.E.size[[7]][[1]][[1]], savefuns = TRUE)
+  g.E.size.thnn2 <- pool(g.E.size[[2]][[1]][[2]], g.E.size[[5]][[1]][[2]], g.E.size[[7]][[1]][[2]], savefuns = TRUE)
+  
+  kNN.E.size.ctrl <- pool(kNN.E.size[[3]], kNN.E.size[[4]], kNN.E.size[[9]])
+  kNN.E.size.thnn <- pool(kNN.E.size[[2]], kNN.E.size[[5]], kNN.E.size[[7]])
+  
+  g.E.ac.ctrl <- pool(g.E.ac[[3]], g.E.ac[[4]], g.E.ac[[9]], savefuns = TRUE)
+  g.E.ac.thnn <- pool(g.E.ac[[2]], g.E.ac[[5]], g.E.ac[[7]], savefuns = TRUE)
   #Jdif.E.size.ctrl <- pool(Jdif.E.size[[3]], Jdif.E.size[[4]], Jdif.E.size[[9]]); Jdif.E.size.thnn <- pool(Jdif.E.size[[2]], Jdif.E.size[[5]], Jdif.E.size[[7]])
-  if (j != length(Year)) { markcon.E.size.ctrl <- pool(markcon.E.size[[3]], markcon.E.size[[4]], markcon.E.size[[9]]); markcon.E.size.thnn <- pool(markcon.E.size[[2]], markcon.E.size[[5]], markcon.E.size[[7]])}
+  
+  g.E.size.interval1 <- as.numeric(colMeans(g.E.size.gof[g.E.size.gof$Class == "Adult", 3:4]))
+  g.E.size.interval2 <- as.numeric(colMeans(g.E.size.gof[g.E.size.gof$Class == "Recruit", 3:4]))
+  g.E.size.ctrl.test1 <- dclf.test(g.E.size.ctrl1, rinterval = g.E.size.interval1)
+  g.E.size.ctrl.test2 <- dclf.test(g.E.size.ctrl2, rinterval = g.E.size.interval2)
+  g.E.size.thnn.test1 <- dclf.test(g.E.size.thnn1, rinterval = g.E.size.interval1)
+  g.E.size.thnn.test2 <- dclf.test(g.E.size.thnn2, rinterval = g.E.size.interval2)
+  g.E.size.gof <- rbind(g.E.size.gof, 
+                        data.frame(Plot = "Ctrl", Class = dimnames(g.E.size[[i]][[2]])[[1]][1], r.min = g.E.size.interval1[1], r.max = g.E.size.interval1[2], g.E.size.ctrl.test1$statistic[1], p.value = g.E.size.ctrl.test1$p.value),
+                        data.frame(Plot = "Ctrl", Class = dimnames(g.E.size[[i]][[2]])[[1]][2], r.min = g.E.size.interval2[1], r.max = g.E.size.interval2[2], g.E.size.ctrl.test2$statistic[1], p.value = g.E.size.ctrl.test2$p.value),
+                        data.frame(Plot = "Thnn", Class = dimnames(g.E.size[[i]][[2]])[[1]][1], r.min = g.E.size.interval1[1], r.max = g.E.size.interval1[2], g.E.size.thnn.test1$statistic[1], p.value = g.E.size.thnn.test1$p.value),
+                        data.frame(Plot = "Thnn", Class = dimnames(g.E.size[[i]][[2]])[[1]][2], r.min = g.E.size.interval2[1], r.max = g.E.size.interval2[2], g.E.size.thnn.test2$statistic[1], p.value = g.E.size.thnn.test2$p.value))
+  
+  g.E.ac.ctrl.test <- dclf.test(g.E.ac.ctrl, rinterval = as.numeric(colMeans(g.E.ac.gof[2:3])))
+  g.E.ac.thnn.test <- dclf.test(g.E.ac.thnn, rinterval = as.numeric(colMeans(g.E.ac.gof[2:3])))
+  g.E.ac.gof <- rbind(g.E.ac.gof, 
+                      data.frame(Plot = "Ctrl", r.min = g.E.ac.interval[1], r.max = g.E.ac.interval[2], g.E.ac.ctrl.test$statistic[1], p.value = g.E.ac.ctrl.test$p.value),
+                      data.frame(Plot = "Thnn", r.min = g.E.ac.interval[1], r.max = g.E.ac.interval[2], g.E.ac.thnn.test$statistic[1], p.value = g.E.ac.thnn.test$p.value))
+
+  
+  if (Year[j] < 2012) { markcon.E.size.ctrl <- pool(markcon.E.size[[3]], markcon.E.size[[4]], markcon.E.size[[9]]); markcon.E.size.thnn <- pool(markcon.E.size[[2]], markcon.E.size[[5]], markcon.E.size[[7]])}
   
   #plot(L.E.size.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
   plot(g.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   plot(kNN.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
-  plot(ac.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(g.E.ac.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   #plot(Jdif.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
-  if (j != length(Year)) { plot(markcon.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
+  if (Year[j] < 2012) { plot(markcon.E.size.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
   
   #plot(L.E.size.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
   plot(g.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   plot(kNN.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
-  plot(ac.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(g.E.ac.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   #plot(Jdif.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
-  if (j != length(Year)) { plot(markcon.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
+  if (Year[j] < 2012) { plot(markcon.E.size.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL) }
   
   
   
@@ -814,7 +890,7 @@ for (j in 4:length(Year)) {
   markcor.E.size.c.ad <- list(); markcor.E.size.c.rec <- markcor.E.size.c.ad
   markcor.E.size.c.ad.cat <- NULL; markcor.E.size.c.rec.cat <- NULL
   
-  if (j != length(Year)) {
+  if (Year[j] < 2012) {
     
     for (i in Plots) {
       
@@ -861,7 +937,8 @@ for (j in 4:length(Year)) {
     
   }
   
-  Jdif.E.rec.ctrl <- pool(Jdif.E.rec[[3]], Jdif.E.rec[[4]], Jdif.E.rec[[9]]); Jdif.E.rec.thnn <- pool(Jdif.E.rec[[2]], Jdif.E.rec[[5]], Jdif.E.rec[[7]])
+  Jdif.E.rec.ctrl <- pool(Jdif.E.rec[[3]], Jdif.E.rec[[4]], Jdif.E.rec[[9]])
+  Jdif.E.rec.thnn <- pool(Jdif.E.rec[[2]], Jdif.E.rec[[5]], Jdif.E.rec[[7]])
   #if (j != length(Year)) { markcon.E.sp.ctrl <- pool(markcon.E.sp[[3]], markcon.E.sp[[4]], markcon.E.sp[[9]]); markcon.E.sp.thnn <- pool(markcon.E.sp[[2]], markcon.E.sp[[5]], markcon.E.sp[[7]]) }
   #Jdif.E.sp.rec.ctrl <- pool(Jdif.E.sp.rec[[3]], Jdif.E.sp.rec[[4]], Jdif.E.sp.rec[[9]]); Jdif.E.sp.rec.thnn <- pool(Jdif.E.sp.rec[[2]], Jdif.E.sp.rec[[5]], Jdif.E.sp.rec[[7]])
   if (j != length(Year)) { Jdif.E.size.c.rec.ctrl <- pool(Jdif.E.size.c.rec[[3]], Jdif.E.size.c.rec[[4]], Jdif.E.size.c.rec[[9]]); Jdif.E.size.c.rec.thnn <- pool(Jdif.E.size.c.rec[[2]], Jdif.E.size.c.rec[[5]], Jdif.E.size.c.rec[[7]]) }
@@ -883,27 +960,56 @@ for (j in 4:length(Year)) {
   
   cat("Test differences in fate \n")
   
-  
   Jdif.E.fate.rec <- list(); K012.E.fate.rec.i <- Jdif.E.fate.rec
   Jdif.E.fate.rec.cat <- NULL; K012.E.fate.rec.i.cat <- NULL
   Jdif.E.fate.rec.ctrl <- NULL; Jdif.E.fate.rec.thnn <- NULL
   K012.E.fate.rec.i.ctrl <- NULL; K012.E.fate.rec.i.thnn <- NULL
+  K012.E.fate.rec.i.gof <- NULL
   
-  if (j != length(Year)) {
+  if (Year[j] < 2011) {
     
     for (i in Plots) {
       
       Jdif.E.fate.rec[[i]] <- envelope(data.fate.rec$ppp[[i]], Jdif, i = "0", r = seq(0,1,0.01), nsim = nsim, savefuns = TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.fate.rec$ppp[[i]]))) 
-      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo = "Tree", i = "RcDead", j = "RcSurv", r = seq(0, 8, le = 51), nsim = nsim, nrank = 5, correction = "Ripley")
+      K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo = "Tree", i = "RcSurv", j = "RcDead", r = seq(0, 8, le = 51), nsim = nsim, nrank = 5, correction = "Ripley")
+      #Kmulti.ls(data.fate.rec.i$ppp[[i]], I = "Tree", J = "RcSurv", r = seq(0, 8, le = 51), corre = "Ripley")
       
       Jdif.E.fate.rec.cat <- cbind(Jdif.E.fate.rec[[i]]$r, Jdif.E.fate.rec.cat, ppp.cat(Jdif.E.fate.rec[[i]]))
       K012.E.fate.rec.i.cat <- cbind(K012.E.fate.rec.i[[i]]$k01$r, K012.E.fate.rec.i.cat, ppp.cat(K012.E.fate.rec.i[[i]]$k01))
       
+      K012.E.fate.rec.i.interval <- c(min(K012.E.fate.rec.i.cat[,1][ppp.cat(K012.E.fate.rec.i[[i]]$k01) != 0], na.rm = T), max(K012.E.fate.rec.i.cat[,1][ppp.cat(K012.E.fate.rec.i[[i]]$k01) != 0], na.rm = T))
+      if (K012.E.fate.rec.i.interval[1] == K012.E.fate.rec.i.interval[2]) K012.E.fate.rec.i.interval[2] <- K012.E.fate.rec.i.interval[2] + .1
+      if (is.infinite(K012.E.fate.rec.i.interval[1])) K012.E.fate.rec.i.interval <- c(min(K012.E.fate.rec.i.cat[,1]), max(K012.E.fate.rec.i.cat[,1]))
+      if (K012.E.fate.rec.i.interval[2] - K012.E.fate.rec.i.interval[1] < 0.1) K012.E.fate.rec.i.interval <- c(min(K012.E.fate.rec.i.cat[,1]) - 0.5, max(K012.E.fate.rec.i.cat[,1]) + 0.5)
+      
+      # lo he hecho de manera mas o menos apañada, metienod la función base que usa K012; no sé si estará bien hecho, pero es lo mejor que puedo hacer
+      marx <- marks(data.fate.rec.i$ppp[[i]])
+      fijo <- (marx == "Tree")
+      I = (marx == "RcSurv")
+      J <- (marx == "RcDead")
+
+      #kkk <- envelope(data.fate.rec.i$ppp[[i]], fun = K012, nsim = nsim, i = "RcSurv", j = "RcDead", fijo = "Tree", nrank = 5)
+      null_model_Kmulti <- envelope(data.fate.rec.i$ppp[[i]], fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5, savefuns = TRUE, savepatterns = TRUE)
+      K012.E.fate.rec.i.test <- dclf.test(null_model_Kmulti, rinterval = K012.E.fate.rec.i.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
+      K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof, 
+                          data.frame(Plot = i, r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.test$statistic[1], p.value = K012.E.fate.rec.i.test$p.value))
+  
     }
     
-    Jdif.E.fate.rec.ctrl <- pool(Jdif.E.fate.rec[[3]], Jdif.E.fate.rec[[4]], Jdif.E.fate.rec[[9]]); Jdif.E.fate.rec.thnn <- pool(Jdif.E.fate.rec[[2]], Jdif.E.fate.rec[[5]], Jdif.E.fate.rec[[7]])
-    K012.E.fate.rec.i.ctrl <- pool(K012.E.fate.rec.i[[3]]$k01, K012.E.fate.rec.i[[4]]$k01, K012.E.fate.rec.i[[9]]$k01); K012.E.fate.rec.i.thnn <- pool.fv(K012.E.fate.rec.i[[2]]$k01, K012.E.fate.rec.i[[5]]$k01, K012.E.fate.rec.i[[7]]$k01)
+    Jdif.E.fate.rec.ctrl <- pool(Jdif.E.fate.rec[[3]], Jdif.E.fate.rec[[4]], Jdif.E.fate.rec[[9]])
+    Jdif.E.fate.rec.thnn <- pool(Jdif.E.fate.rec[[2]], Jdif.E.fate.rec[[5]], Jdif.E.fate.rec[[7]])
+    K012.E.fate.rec.i.ctrl <- pool(K012.E.fate.rec.i[[3]]$k01, K012.E.fate.rec.i[[4]]$k01, K012.E.fate.rec.i[[9]]$k01)
+    K012.E.fate.rec.i.thnn <- pool(K012.E.fate.rec.i[[2]]$k01, K012.E.fate.rec.i[[5]]$k01, K012.E.fate.rec.i[[7]]$k01)
     
+    # No se puede calcular el gof para la agrupacion de salidas
+    # K012.E.fate.rec.i.interval <- as.numeric(colMeans(K012.E.fate.rec.i.gof[2:3]))
+    # K012.E.fate.rec.i.ac.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.ac.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
+    # K012.E.fate.rec.i.ctrl.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.interval)
+    # K012.E.fate.rec.i.thnn.test <- dclf.test(K012.E.fate.rec.i.thnn, rinterval = K012.E.fate.rec.i.interval)
+    # K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof,
+    #                      data.frame(Plot = "Ctrl", r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.ctrl.test$statistic[1], p.value = K012.E.fate.rec.i.ctrl.test$p.value),
+    #                      data.frame(Plot = "Thnn", r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.thnn.test$statistic[1], p.value = K012.E.fate.rec.i.thnn.test$p.value))
+
     par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
     plot(Jdif.E.fate.rec.ctrl, main = NULL, legend = F)
     plot(Jdif.E.fate.rec.thnn, main = NULL, legend = F)
@@ -915,11 +1021,10 @@ for (j in 4:length(Year)) {
     plot(K012.E.fate.rec.i.thnn, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F, 
          col = c(col.trans, col.trans, col.trans, col.trans, col.trans, col.trans, "grey","black","grey"),
          lty = c(0, 0, 0, 0, 0 , 0, 3, 1, 3))
-    title(paste0("Year ", Year[j], " // Distance-dependent fate of recruits"), line = -1, cex.main = 1, outer = TRUE)
+    title(paste0("Year ", Year[j], " // Distance-dependent of surviving recruits"), line = -1, cex.main = 1, outer = TRUE)
     par(old.par)
     
   }
-  
   
   markcor.E.growth.ad <- list(); Jdif.E.fate.ad <- markcor.E.growth.ad
   markcor.E.growth.ad.cat <- NULL
@@ -972,10 +1077,19 @@ for (j in 4:length(Year)) {
   L.E.env.cat <- NULL; g.E.env.cat <- NULL; kNN.E.env.cat <- NULL
   pred.env.sp <- data.frame()
   pred.env.fate <- data.frame()
+  g.E.env.gof <- NULL
   
   data.env <- hyperframe(MDT = listof(rep(NA, 9)), MDS = listof(rep(NA, 9)), Lad.var = listof(rep(NA, 9)), Lad.cv = listof(rep(NA, 9)), Lad.shan = listof(rep(NA, 9)), Canopy = listof(rep(NA, 9)), CanOpen = listof(rep(NA, 9)), LAI = listof(rep(NA, 9)), DiffBelow = listof(rep(NA, 9)), DiffBelow.Yr = listof(rep(NA, 9)), N.Sunflecks = listof(rep(NA, 9)), Mdn.Sunflecks = listof(rep(NA, 9)), Max.Sunflecks = listof(rep(NA, 9)), Fs = listof(rep(NA, 9)), Hed = listof(rep(NA, 9)), Rub = listof(rep(NA, 9)), Pter = listof(rep(NA, 9)), Scl = listof(rep(NA, 9)))
   
   data.sp.rec <- cbind.hyperframe(data.sp.rec, data.env)
+  
+  matrix.env.sum <- array(unlist(matrix.env), dim = c(15,15))
+  colnames(matrix.env.sum) <- gsub('.pred', '', colnames(matrix.env[[2]]))
+  rownames(matrix.env.sum) <- gsub('.pred', '', rownames(matrix.env[[2]]))
+  sort(colSums(matrix.env.sum > 0.7) - 1)
+  sort(rowSums(matrix.env.sum > 0.7) - 1)
+  
+  corrplot(matrix.env.sum, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
   
   berman.env <- data.frame()
   var.env.Plot <- list()
@@ -984,8 +1098,8 @@ for (j in 4:length(Year)) {
     
     # if (!is.null(data.sp$covs[[i]]$Fs)) {
     
-    if (fit.gam == F) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + CanOpen + LAI + DiffBelow + DiffBelow.Yr + N.Sunflecks + Mdn.Sunflecks + Max.Sunflecks + Fs + Hed + Rub + Pter + Scl, data = data.sp$covs[[i]]) #MDT + MDS + Lad.var + Lad.cv + Lad.shan +
-    if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(DiffBelow.Yr,3) + bs(N.Sunflecks,3) + bs(Mdn.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
+    if (fit.gam == F) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data = data.sp$covs[[i]])
+    if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
     # } else {
     #   
@@ -1038,9 +1152,14 @@ for (j in 4:length(Year)) {
     g.E.env.cat <- cbind(g.E.env[[i]]$r, g.E.env.cat, ppp.cat(g.E.env[[i]]))
     kNN.E.env.cat <- cbind(kNN.E.env[[i]]$r, kNN.E.env.cat, ppp.cat(kNN.E.env[[i]]))
     
+    g.E.env.interval <- c(min(g.E.env.cat[,1][ppp.cat(g.E.env[[i]]) != 0], na.rm = T), max(g.E.env.cat[,1][ppp.cat(g.E.env[[i]]) != 0], na.rm = T))
+    g.E.env.test <- dclf.test(g.E.env[[i]], rinterval = g.E.env.interval)
+    g.E.env.gof <- rbind(g.E.env.gof, 
+                         data.frame(Plot = i, r.min = g.E.env.interval[1], r.max = g.E.env.interval[2], g.E.env.test$statistic[1], p.value = g.E.env.test$p.value))
+    
     pred.env.sp <- rbind(pred.env.sp, data.frame(Plot = i, Treat = Treat[i], Sp = data.sp.rec$ppp[[i]]$marks[data.sp.list[[i]]], 
                                                  pred = fitted(fit.env[[i]], dataonly = T)[data.sp.list[[i]]] )) 
-    if (j != length(Year)) {
+    if (Year[j] < 2011) {
       
       pred.env.fate <- rbind(pred.env.fate, data.frame(Plot = i, Treat = Treat[i], fate = data.fate.rec$ppp[[i]]$marks[data.sp.list[[i]]], 
                                                        pred = fitted(fit.env[[i]], dataonly = T)[data.sp.list[[i]]] ))
@@ -1081,7 +1200,7 @@ for (j in 4:length(Year)) {
     mutate( se = sd/sqrt(n))  %>%
     mutate( ic = se * qt((1 - 0.05)/2 + .5, n - 1))
   
-  if (j != length(Year)) {
+  if (Year[j] < 2012) {
     
     sum.env.fate <- pred.env.fate[!is.na(pred.env.fate$fate),] %>%
       group_by(fate, Treat) %>%
@@ -1096,9 +1215,18 @@ for (j in 4:length(Year)) {
   }
   
   #L.E.env.ctrl <- pool(L.E.env[[3]], L.E.env[[4]], L.E.env[[9]]); L.E.env.thnn <- pool(L.E.env[[2]], L.E.env[[5]], L.E.env[[7]])
-  g.E.env.ctrl <- pool(g.E.env[[3]], g.E.env[[4]], g.E.env[[9]]); g.E.env.thnn <- pool(g.E.env[[2]], g.E.env[[5]], g.E.env[[7]])
-  kNN.E.env.ctrl <- pool(kNN.E.env[[3]], kNN.E.env[[4]], kNN.E.env[[9]]); kNN.E.env.thnn <- pool(kNN.E.env[[2]], kNN.E.env[[5]], kNN.E.env[[7]])
+  g.E.env.ctrl <- pool(g.E.env[[3]], g.E.env[[4]], g.E.env[[9]], savefuns = TRUE)
+  g.E.env.thnn <- pool(g.E.env[[2]], g.E.env[[5]], g.E.env[[7]], savefuns = TRUE)
+  kNN.E.env.ctrl <- pool(kNN.E.env[[3]], kNN.E.env[[4]], kNN.E.env[[9]])
+  kNN.E.env.thnn <- pool(kNN.E.env[[2]], kNN.E.env[[5]], kNN.E.env[[7]])
   #F.E.env.ctrl <- pool(F.E.env[[3]], F.E.env[[4]], F.E.env[[9]]); FN.E.env.thnn <- pool(F.E.env[[2]], F.E.env[[5]], F.E.env[[7]])
+  
+  g.E.env.interval <- as.numeric(colMeans(g.E.env.gof[2:3]))
+  g.E.env.ctrl.test <- dclf.test(g.E.env.ctrl, rinterval = g.E.env.interval)
+  g.E.env.thnn.test <- dclf.test(g.E.env.thnn, rinterval = g.E.env.interval)
+  g.E.env.gof <- rbind(g.E.env.gof, 
+                       data.frame(Plot = "Ctrl", r.min = g.E.env.interval[1], r.max = g.E.env.interval[2], g.E.env.ctrl.test$statistic[1], p.value = g.E.env.ctrl.test$p.value),
+                       data.frame(Plot = "Thnn", r.min = g.E.env.interval[1], r.max = g.E.env.interval[2], g.E.env.thnn.test$statistic[1], p.value = g.E.env.thnn.test$p.value))
   
   par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.env.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
@@ -1110,8 +1238,8 @@ for (j in 4:length(Year)) {
   plot(kNN.E.env.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   par(old.par)
   
-  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + DiffBelow.Yr + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id) #MDT + MDS + Lad.var + Lad.cv + Lad.shan + 
-  if (fit.gam == T) fit.env.full <- mppm(ppp ~ 1 + Treat + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(DiffBelow.Yr,3) + bs(N.Sunflecks,3) + bs(Mdn.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
+  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id) #MDT + MDS + Lad.var + Lad.cv + Lad.shan + 
+  if (fit.gam == T) fit.env.full <- mppm(ppp ~ 1 + Treat + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
   
   fit.env.red <- stepAIC(fit.env.full)
   dev.env <- anova(fit.env.red)
@@ -1143,10 +1271,19 @@ for (j in 4:length(Year)) {
   L.E.dens.cat <- NULL; g.E.dens.cat <- NULL; kNN.E.dens.cat <- NULL
   pred.dens.sp <- data.frame()
   pred.dens.fate <- data.frame()
+  g.E.dens.gof <- NULL
   
   data.dens <- hyperframe(Dens = listof(rep(NA, 9)), Dens.adult = listof(rep(NA, 9)), Dens.rec = listof(rep(NA, 9)), Dens.size = listof(rep(NA, 9)), Dens.size.rec = listof(rep(NA, 9)), Dens.Fs.rec = listof(rep(NA, 9)), Dens.Qh.rec = listof(rep(NA, 9)), Dens.Qi.rec = listof(rep(NA, 9)), Dens.rich.rec = listof(rep(NA, 9)), Dens.shan.rec = listof(rep(NA, 9)))
   
   data.sp.rec <- cbind.hyperframe(data.sp.rec, data.dens)
+  
+  matrix.dens.sum <- array(unlist(matrix.dens), dim = c(10,10))
+  colnames(matrix.dens.sum) <- colnames(matrix.dens[[2]])
+  rownames(matrix.dens.sum) <- rownames(matrix.dens[[2]])
+  sort(colSums(matrix.dens.sum > 0.7) - 1)
+  sort(rowSums(matrix.dens.sum > 0.7) - 1)
+  
+  corrplot(matrix.dens.sum, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
   
   berman.dens <- data.frame()
   
@@ -1154,8 +1291,8 @@ for (j in 4:length(Year)) {
   
   for (i in Plots) {
     
-    if (fit.gam == F) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Dens.adult + Dens.rec + Dens.size.rec + Dens.rich.rec + Dens.shan.rec, data = data.sp$covs[[i]])
-    if (fit.gam == T) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3), use.gam = TRUE, data = data.sp$covs[[i]])
+    if (fit.gam == F) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Dens.adult + Dens.rec + Dens.rich.rec + Dens.shan.rec, data = data.sp$covs[[i]])
+    if (fit.gam == T) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
     fit.dens[[i]] <- step(fit.dens.full, trace = 0)
     title.dens[[i]] <- as.character(fit.dens[[i]]$trend)[[2]]
@@ -1190,6 +1327,11 @@ for (j in 4:length(Year)) {
     #L.E.dens.cat <- cbind(L.E.dens[[i]]$r, L.E.dens.cat, ppp.cat(L.E.dens[[i]]))
     g.E.dens.cat <- cbind(g.E.dens[[i]]$r, g.E.dens.cat, ppp.cat(g.E.dens[[i]]))
     kNN.E.dens.cat <- cbind(kNN.E.dens[[i]]$r, kNN.E.dens.cat, ppp.cat(kNN.E.dens[[i]]))
+    
+    g.E.dens.interval <- c(min(g.E.dens.cat[,1][ppp.cat(g.E.dens[[i]]) != 0], na.rm = T), max(g.E.dens.cat[,1][ppp.cat(g.E.dens[[i]]) != 0], na.rm = T))
+    g.E.dens.test <- dclf.test(g.E.dens[[i]], rinterval = g.E.dens.interval)
+    g.E.dens.gof <- rbind(g.E.dens.gof, 
+                         data.frame(Plot = i, r.min = g.E.dens.interval[1], r.max = g.E.dens.interval[2], g.E.dens.test$statistic[1], p.value = g.E.dens.test$p.value))
     
     pred.dens.sp <- rbind(pred.dens.sp, data.frame(Plot = i, Treat = Treat[i], Sp = data.sp.rec$ppp[[i]]$marks[data.sp.list[[i]]], 
                                                    pred = fitted(fit.dens[[i]], dataonly = T)[data.sp.list[[i]]] )) 
@@ -1250,20 +1392,29 @@ for (j in 4:length(Year)) {
   }
   
   #L.E.dens.ctrl <- pool(L.E.dens[[3]], L.E.dens[[4]], L.E.dens[[9]]); L.E.dens.thnn <- pool(L.E.dens[[2]], L.E.dens[[5]], L.E.dens[[7]])
-  g.E.dens.ctrl <- pool(g.E.dens[[3]], g.E.dens[[4]], g.E.dens[[9]]); g.E.dens.thnn <- pool(g.E.dens[[2]], g.E.dens[[5]], g.E.dens[[7]])
-  kNN.E.dens.ctrl <- pool(kNN.E.dens[[3]], kNN.E.dens[[4]], kNN.E.dens[[9]]); kNN.E.dens.thnn <- pool(kNN.E.dens[[2]], kNN.E.dens[[5]], kNN.E.dens[[7]])
+  g.E.dens.ctrl <- pool(g.E.dens[[3]], g.E.dens[[4]], g.E.dens[[9]], savefuns = TRUE)
+  g.E.dens.thnn <- pool(g.E.dens[[2]], g.E.dens[[5]], g.E.dens[[7]], savefuns = TRUE)
+  kNN.E.dens.ctrl <- pool(kNN.E.dens[[3]], kNN.E.dens[[4]], kNN.E.dens[[9]])
+  kNN.E.dens.thnn <- pool(kNN.E.dens[[2]], kNN.E.dens[[5]], kNN.E.dens[[7]])
   
-  par(mfrow=c(2,2), mar=c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+  g.E.dens.interval <- as.numeric(colMeans(g.E.dens.gof[2:3]))
+  g.E.dens.ctrl.test <- dclf.test(g.E.dens.ctrl, rinterval = g.E.dens.interval)
+  g.E.dens.thnn.test <- dclf.test(g.E.dens.thnn, rinterval = g.E.dens.interval)
+  g.E.dens.gof <- rbind(g.E.dens.gof, 
+                       data.frame(Plot = "Ctrl", r.min = g.E.dens.interval[1], r.max = g.E.dens.interval[2], g.E.dens.ctrl.test$statistic[1], p.value = g.E.dens.ctrl.test$p.value),
+                       data.frame(Plot = "Thnn", r.min = g.E.dens.interval[1], r.max = g.E.dens.interval[2], g.E.dens.thnn.test$statistic[1], p.value = g.E.dens.thnn.test$p.value))
+  
+  par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   #plot(L.E.dens.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.dens.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.dens.ctrl, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
+  plot(g.E.dens.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.dens.ctrl, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   #plot(L.E.dens.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(g.E.dens.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
-  plot(kNN.E.dens.thnn, legend = F, mar.panel=c(1, 1, 1, 1), title = NULL)
+  plot(g.E.dens.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
+  plot(kNN.E.dens.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   par(old.par)
   
   if (fit.gam == F) fit.dens.full <- mppm(ppp ~ 1 + Treat +  Dens.adult + Dens.rec + Dens.size.rec + Dens.rich.rec + Dens.shan.rec, data.sp.rec[Plots,], iformula = ~Interaction*id)
-  if (fit.gam == T) fit.dens.full <- mppm(ppp ~ 1 + Treat + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3),  use.gam=TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
+  if (fit.gam == T) fit.dens.full <- mppm(ppp ~ 1 + Treat + bs(Dens.adult,3) + bs(Dens.rec,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3),  use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
   
   fit.dens.red <- stepAIC(fit.dens.full)
   dev.dens <- anova(fit.dens.red)
@@ -1278,9 +1429,9 @@ for (j in 4:length(Year)) {
   estimates.dens.red = as_tibble(d) %>% mutate_if(is.numeric, ~sprintf("%.4f",.))
   grid.table(estimates.dens.red)
   
-  res <- residuals(fit.dens.red, type="pearson")
-  smor <- with(hyperframe(res=res), Smooth(res, sigma=4))
-  plot(smor, equal.ribbon=TRUE, main = "Residuals density")
+  res <- residuals(fit.dens.red, type = "pearson")
+  smor <- with(hyperframe(res = res), Smooth(res, sigma = 4))
+  plot(smor, equal.ribbon = TRUE, main = "Residuals density")
   
   if (save.output == T) dev.off()
   
@@ -1299,6 +1450,7 @@ for (j in 4:length(Year)) {
     #L.E.rec.ctrl, 
     g.E.rec.ctrl, kNN.E.rec.ctrl, #F.E.rec.ctrl, L.E.rec.thnn, 
     g.E.rec.thnn, kNN.E.rec.thnn, 
+    g.E.rec.gof,
     #F.E.rec.thnn,
     
     #L.E.sp.cat, g.E.sp.cat, kNN.E.sp.cat, Jdif.E.sp.cat, markcon.E.sp.cat,
@@ -1307,9 +1459,12 @@ for (j in 4:length(Year)) {
     #L.E.size.cat, 
     g.E.size.cat, kNN.E.size.cat, Jdif.E.size.cat, markcon.E.size.cat,
     #L.E.size.ctrl, 
-    g.E.size.ctrl, kNN.E.size.ctrl, ac.E.size.ctrl, #Jdif.E.size.ctrl, 
+    g.E.size.ctrl, kNN.E.size.ctrl, g.E.ac.ctrl, #Jdif.E.size.ctrl, 
     #L.E.size.thnn, 
-    g.E.size.thnn, kNN.E.size.thnn, ac.E.size.thnn, #Jdif.E.size.thnn,
+    g.E.size.thnn, kNN.E.size.thnn, g.E.ac.thnn, #Jdif.E.size.thnn,
+    g.E.size.ctrl1, g.E.size.ctrl2, g.E.size.thnn1, g.E.size.thnn2,
+    g.E.size.gof,
+    g.E.ac.gof,
     markcon.E.size.ctrl, #markcon.E.sp.thnn, 
     
     markcor.E.size.c.ad, markcor.E.size.c.rec, Jdif.E.rec, Jdif.E.sp.rec, Jdif.E.size.c.rec, markcon.E.sp,
@@ -1321,14 +1476,15 @@ for (j in 4:length(Year)) {
     Jdif.E.fate.rec, K012.E.fate.rec.i,
     Jdif.E.fate.rec.cat, K012.E.fate.rec.i.cat,
     Jdif.E.fate.rec.ctrl, Jdif.E.fate.rec.thnn, K012.E.fate.rec.i.ctrl, K012.E.fate.rec.i.thnn,
+    Jdif.E.fate.ad.cat, K012.E.fate.rec.i.gof,
     
     markcor.E.growth.ad, Jdif.E.fate.ad,
     markcor.E.growth.ad.cat,
     markcor.E.growth.ad.ctrl, markcor.E.growth.ad.thnn,
-    Jdif.E.fate.ad.cat,
     
     data.sp.rec,
     
+    matrix.env.sum,
     #fit.env, title.env, L.E.env, g.E.env, kNN.E.env, 
     pred.env.sp, pred.env.fate, ####
     sum.env.sp, sum.env.fate, ###
@@ -1336,9 +1492,11 @@ for (j in 4:length(Year)) {
     g.E.env.cat, kNN.E.env.cat,
     #L.E.env.ctrl, L.E.env.thnn, 
     g.E.env.ctrl, g.E.env.thnn, kNN.E.env.ctrl, kNN.E.env.thnn, 
+    g.E.env.gof,
     estimates.env.red, dev.env, #fit.env.red, 
     berman.env, var.env.Plot,
     
+    matrix.dens.sum,
     #fit.dens, title.dens, L.E.dens, g.E.dens, kNN.E.dens, 
     pred.dens.sp, pred.dens.fate, ###
     sum.dens.sp, sum.dens.fate, ###
@@ -1346,9 +1504,10 @@ for (j in 4:length(Year)) {
     g.E.dens.cat, kNN.E.dens.cat,
     #L.E.dens.ctrl, L.E.dens.thnn, 
     g.E.dens.ctrl, g.E.dens.thnn, kNN.E.dens.ctrl, kNN.E.dens.thnn, 
+    g.E.dens.gof,
     estimates.dens.red, dev.dens, #fit.dens.red,
     berman.dens, var.dens.Plot,
-    
+
     compress = TRUE,
     file = paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".RData"))
   

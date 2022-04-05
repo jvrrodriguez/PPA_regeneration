@@ -6,18 +6,18 @@ library(grid)
 source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function quantumPlot.R")
 
 Year <- c(2008, 2009, 2010, 2011)
-data <- c("g.E.rec", "kNN.E.rec", "Jdif.E.rec","Jdif.E.size", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
-y_stats <- list("g(r)", "D(r)", "Ji· (r) - J(r)", "Ji· (r) - J(r)", "Ji· (r) - J(r)", expression(K[012] (r)), "g(r)", "g(r)")
-log.data <- c(T, F, F, F, F, F, T, T)
-y_inter <- c(1, 0, 0, 0, 0, 0, 1, 1)
+data <- c("g.E.rec", "kNN.E.rec", "Jdif.E.rec","g.E.ac", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
+y_stats <- list("g(r)", "D(r)", "Ji· (r) - J(r)", "g(r))", "Ji· (r) - J(r)", expression(K[012] (r)), "g(r)", "g(r)")
+log.data <- c(T, F, F, T, F, F, T, T)
+y_inter <- c(1, 0, 0, 1, 0, 0, 1, 1)
 save.output <- T
 
 
-for (i in 1:length(data)){
+for (i in 1:length(data)) {
 
   data.cat <- NULL
 
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],".pdf"), width=7, height=5)  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],".pdf"), width = 7, height = 5)  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -29,9 +29,9 @@ for (i in 1:length(data)){
     
   }
     
-  for (j in 1:year.tmp){
+  for (j in 1:year.tmp) {
   
-    load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j],".RData"))
+    load(file = paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[j], ".RData"))
     
     data.ctrl <- get(paste0(data[i],".ctrl"))
     data.thnn <- get(paste0(data[i],".thnn"))
@@ -54,13 +54,13 @@ for (i in 1:length(data)){
   for (j in Treat) { 
     
     Plot.list[[j]] <- ggplot(data.cat[data.cat$Treat == j,], aes(x = r, y = Year)) + 
-      geom_raster(aes(fill=value)) + 
+      geom_raster(aes(fill = value)) + 
       scale_fill_gradient2(low = "indianred3", mid = "white", high = "darkolivegreen3", midpoint = .0) +
-      labs(x="Distance r (m)", y="Year") +
+      labs(x = "Distance r (m)", y = "Year") +
       scale_y_continuous(trans = "reverse") + 
-      theme_bw() + theme(axis.text.x=element_text(size=9, angle=0, vjust=0.3),
-                         axis.text.y=element_text(size=7, angle=90),
-                         plot.title=element_text(size=11)) + theme(legend.position = "none")
+      theme_bw() + theme(axis.text.x = element_text(size = 9, angle = 0, vjust = 0.3),
+                         axis.text.y = element_text(size = 7, angle = 90),
+                         plot.title = element_text(size = 11)) + theme(legend.position = "none")
     
     
   }

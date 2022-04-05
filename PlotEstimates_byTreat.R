@@ -7,7 +7,7 @@ housetasks <- read.delim(
 head(housetasks, 4)
 
 # Visualization
-ggballoonplot(housetasks, fill = "value")+
+ggballoonplot(housetasks, fill = "value") +
   scale_fill_viridis_c(option = "C")
 
 
