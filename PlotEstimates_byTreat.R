@@ -49,11 +49,11 @@ estimate.dens.plot <- NULL
 p.env.plot <- NULL
 p.dens.plot <- NULL
 
-for (i in 1:length(Year)){
+for (i in 1:length(Year)) {
   
-  load(file=paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[i],".RData"))
+  load(file = paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[i],".RData"))
   
-  data.pred <- rbind(data.pred, data.frame(Year = as.factor(Year[i]), pred.dens.sp[,1:3], fate = pred.dens.fate[,3], pred.dens=pred.dens.sp[,4], pred.env=pred.env.sp[,4]))
+  data.pred <- rbind(data.pred, data.frame(Year = as.factor(Year[i]), pred.dens.sp[,1:3], fate = pred.dens.fate[,3], pred.dens = pred.dens.sp[,4], pred.env = pred.env.sp[,4]))
   
   estimate.env.tmp <- array(NA, length(Var.env))
   p.env.tmp <- array(NA, length(Var.env))
@@ -73,10 +73,10 @@ for (i in 1:length(Year)){
   estimate.dens <- c(estimate.dens, estimate.dens.tmp)
   p.dens <- c(p.dens, p.dens.tmp)
   
-  a_ctrl <- aov(pred~Sp, data=pred.env.sp[pred.env.sp$Treat=="0%",])
+  a_ctrl <- aov(pred~Sp, data = pred.env.sp[pred.env.sp$Treat == "0%",])
   tHSD_ctrl <- TukeyHSD(a_ctrl, ordered = FALSE, conf.level = 0.95)
   
-  a_thnn <- aov(pred~Sp, data=pred.env.sp[pred.env.sp$Treat=="30%",])
+  a_thnn <- aov(pred~Sp, data = pred.env.sp[pred.env.sp$Treat == "30%",])
   tHSD_thnn <- TukeyHSD(a_thnn, ordered = FALSE, conf.level = 0.95)
   
   for (j in Plot) {
@@ -106,17 +106,17 @@ for (i in 1:length(Year)){
   
   #https://stackoverflow.com/questions/18771516/is-there-a-function-to-add-aov-post-hoc-testing-results-to-ggplot2-boxplot
   
-  list.env.sp[[i]] <- ggplot(sum.env.sp, aes(x=Treat, y=mean, fill=Sp)) + 
-    geom_bar(stat="identity", color="black", position=position_dodge()) +
-    labs(x="Treatment", y="Probability") + 
-    geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) 
+  list.env.sp[[i]] <- ggplot(sum.env.sp, aes(x = Treat, y = mean, fill = Sp)) + 
+    geom_bar(stat = "identity", color = "black", position = position_dodge()) +
+    labs(x = "Treatment", y = "Probability") + 
+    geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9)) 
     #geom_text(data = generate_label_df(pred.env.sp, tHSD_ctrl, 'Sp'), aes(x = plot.labels, y = V1, label = labels))
     #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
   
-  list.dens.sp[[i]] <- ggplot(sum.dens.sp, aes(x=Treat, y=mean, fill=Sp)) + 
-    geom_bar(stat="identity", color="black", position=position_dodge()) +
-    labs(x="Treatment", y="Probability") + 
-    geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9))
+  list.dens.sp[[i]] <- ggplot(sum.dens.sp, aes(x = Treat, y = mean, fill = Sp)) + 
+    geom_bar(stat = "identity", color = "black", position = position_dodge()) +
+    labs(x = "Treatment", y = "Probability") + 
+    geom_errorbar( aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9))
     #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
   
   
@@ -129,39 +129,39 @@ for (i in 1:length(Year)){
     }
     
     sum.env.fate <- sum.env.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
-    mod.env <- aov(pred.env ~ Treat: fate, data = data.pred[data.pred$Year==Year[i],])
+    mod.env <- aov(pred.env ~ Treat: fate, data = data.pred[data.pred$Year == Year[i],])
     tukey.env <- data.frame(TukeyHSD(mod.env)$`Treat:fate`, label = array(signif.num(TukeyHSD(mod.env)$`Treat:fate`[,4])))
     tukey.env <- tukey.env[c(2,5),]
     max.env <- max(sum.env.fate$mean + sum.env.fate$sd)
     
-    list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x=sum.env.fate$fate, y=mean, fill=sum.env.fate$fate)) + 
-      geom_bar(stat="identity", color="black", position=position_dodge()) +
+    list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x = sum.env.fate$fate, y = mean, fill = sum.env.fate$fate)) + 
+      geom_bar(stat = "identity", color = "black", position = position_dodge()) +
       facet_grid(.~Treat) + 
-      labs(x="", y=expression(paste("Pred. intensity ", lambda))) + 
-      scale_y_continuous(limits=c(0,max.env)) + 
-      geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
-      geom_signif(annotations = c("",""), y_position = max.env-0.01, xmin=c(1,1), xmax=c(2,2)) +
+      labs(x = "", y = expression(paste("Pred. intensity ", lambda))) + 
+      scale_y_continuous(limits = c(0,max.env)) + 
+      geom_errorbar( aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9)) +
+      geom_signif(annotations = c("",""), y_position = max.env - 0.01, xmin = c(1,1), xmax = c(2,2)) +
       geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.env, 4), aes(label = c(tukey.env$label[1], "",tukey.env$label[2], "")), data = tukey.env) + 
       ggtitle(paste0("Environmental factors // ", Year[i])) +
-      theme(plot.title = element_text(size=10), axis.text.x = element_blank())
+      theme(plot.title = element_text(size = 10), axis.text.x = element_blank())
       #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
     sum.dens.fate <- sum.dens.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
-    mod.dens <- aov(pred.dens ~ Treat: fate, data = data.pred[data.pred$Year==Year[i],])
+    mod.dens <- aov(pred.dens ~ Treat: fate, data = data.pred[data.pred$Year == Year[i],])
     tukey.dens <- data.frame(TukeyHSD(mod.dens)$`Treat:fate`, label = array(signif.num(TukeyHSD(mod.dens)$`Treat:fate`[,4])))
     tukey.dens <- tukey.dens[c(2,5),]
     max.dens <- max(sum.dens.fate$mean + sum.dens.fate$sd/4)
     
-    list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x=sum.dens.fate$fate, y=mean, fill=sum.dens.fate$fate)) + 
-      geom_bar(stat="identity", color="black", position=position_dodge()) +
+    list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x = sum.dens.fate$fate, y = mean, fill = sum.dens.fate$fate)) + 
+      geom_bar(stat = "identity", color = "black", position = position_dodge()) +
       facet_wrap(.~Treat) + 
-      labs(x="", y=expression(paste("Pred. intensity ", lambda))) + 
-      scale_y_continuous(limits=c(0, max.dens)) + 
-      geom_errorbar( aes(ymin=mean-se, ymax=mean+se), width=.2, position=position_dodge(.9)) +
-      geom_signif(annotations = c("",""), y_position = max.dens-0.03, xmin=c(1,1), xmax=c(2,2)) +
+      labs(x = "", y = expression(paste("Pred. intensity ", lambda))) + 
+      scale_y_continuous(limits = c(0, max.dens)) + 
+      geom_errorbar( aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9)) +
+      geom_signif(annotations = c("",""), y_position = max.dens - 0.03, xmin = c(1,1), xmax = c(2,2)) +
       geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.dens, 4), aes(label = c(tukey.dens$label[1], "",tukey.dens$label[2], "")), data = tukey.dens) + 
       ggtitle(paste0("Density-dependent factors // ", Year[i])) +
-      theme(plot.title = element_text(size=10), axis.text.x = element_blank())
+      theme(plot.title = element_text(size = 10), axis.text.x = element_blank())
       #title("Best Aggregation model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
   }
@@ -188,8 +188,8 @@ p.dens.plot <-  ifelse(p.dens.plot[,3:9] == 1, levels(var.dens.Plot[[j]]$Ztest)[
 colnames(estimate.env.plot)[3:17] <- Var.env
 colnames(estimate.dens.plot)[3:9] <- Var.dens
 
-estimate.env.plot <- format(estimate.env.plot, trim = TRUE, digits=3, scientific= 5)
-estimate.dens.plot <- format(estimate.dens.plot, trim = TRUE, digits=3, scientific= 5)
+estimate.env.plot <- format(estimate.env.plot, trim = TRUE, digits = 3, scientific = 5)
+estimate.dens.plot <- format(estimate.dens.plot, trim = TRUE, digits = 3, scientific = 5)
 
 estimate.env.plot2 <- matrix(paste(as.matrix(estimate.env.plot[,3:17]), as.matrix(p.env.plot)), ncol = 15)
 estimate.dens.plot2 <- matrix(paste(as.matrix(estimate.dens.plot[,3:9]), as.matrix(p.dens.plot)), ncol = 7)
@@ -214,15 +214,15 @@ if (save.output == T) {
   
 }
   
-sum.env <- data.frame(Variable = Var.env, Year = rep(Year, each=length(Var.env)), estimate = estimate.env, p = p.env)
+sum.env <- data.frame(Variable = Var.env, Year = rep(Year, each = length(Var.env)), estimate = estimate.env, p = p.env)
 
-sum.dens <- data.frame(Variable = Var.dens, Year = rep(Year, each=length(Var.dens)), estimate = estimate.dens, p = p.dens)
-
-
+sum.dens <- data.frame(Variable = Var.dens, Year = rep(Year, each = length(Var.dens)), estimate = estimate.dens, p = p.dens)
 
 
 
-if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.pdf", width=5, height=8)  
+
+
+if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.pdf", width = 5, height = 8)  
 
 ggballoonplot(sum.env, x = "Year", y = "Variable", fill = "estimate", size = "p") + 
   scale_fill_viridis_c(option = "C")
@@ -233,10 +233,10 @@ ggballoonplot(sum.dens, x = "Year", y = "Variable", fill = "estimate", size = "p
 if (save.output == T) dev.off()
 
 
-if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.sp.pdf", width=6, height=9)  
+if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.sp.pdf", width = 6, height = 9)  
 
-prow <- plot_grid(list.env.sp[[1]] + theme(legend.position="none"), list.dens.sp[[1]] + theme(legend.position="none"), list.env.sp[[2]]+ theme(legend.position="none"), list.dens.sp[[2]]+ theme(legend.position="none"),
-                  list.env.sp[[3]] + theme(legend.position="none"),  list.dens.sp[[3]] + theme(legend.position="none"), list.env.sp[[4]] + theme(legend.position="none"), list.dens.sp[[4]] + theme(legend.position="none"),
+prow <- plot_grid(list.env.sp[[1]] + theme(legend.position = "none"), list.dens.sp[[1]] + theme(legend.position = "none"), list.env.sp[[2]] + theme(legend.position = "none"), list.dens.sp[[2]] + theme(legend.position = "none"),
+                  list.env.sp[[3]] + theme(legend.position = "none"),  list.dens.sp[[3]] + theme(legend.position = "none"), list.env.sp[[4]] + theme(legend.position = "none"), list.dens.sp[[4]] + theme(legend.position = "none"),
                   align = 'vh', ncol = 2,
                   labels = c("a)", "b)", "c)", "d)", "e)", "f)", "h)", "i)"),
                   hjust = -1)
@@ -256,11 +256,11 @@ print(
 if (save.output == T) dev.off()
 
 
-if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.fate.pdf", width=6, height=9)  
+if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.fate.pdf", width = 6, height = 9)  
 
-prow <- plot_grid(list.env.fate[[1]] + theme(legend.position="none"), list.dens.fate[[1]] + theme(legend.position="none"),
-                  list.env.fate[[2]] + theme(legend.position="none"),  list.dens.fate[[2]] + theme(legend.position="none"), 
-                  list.env.fate[[3]] + theme(legend.position="none"), list.dens.fate[[3]] + theme(legend.position="none"),
+prow <- plot_grid(list.env.fate[[1]] + theme(legend.position = "none"), list.dens.fate[[1]] + theme(legend.position = "none"),
+                  list.env.fate[[2]] + theme(legend.position = "none"),  list.dens.fate[[2]] + theme(legend.position = "none"), 
+                  list.env.fate[[3]] + theme(legend.position = "none"), list.dens.fate[[3]] + theme(legend.position = "none"),
                   align = 'vh', ncol = 2,
                   labels = c("a)", "b)", "c)", "d)", "e)", "f)"),
                   hjust = -1)
@@ -280,7 +280,7 @@ plot(prow)
 
 if (save.output == T) dev.off()
 
-data.pred$pred.dens <- ifelse (data.pred$pred.dens > 1, 1, data.pred$pred.dens)
+data.pred$pred.dens <- ifelse(data.pred$pred.dens > 1, 1, data.pred$pred.dens)
 
 
 
@@ -291,15 +291,15 @@ library(MuMIn)
 library(sjPlot)
 library(interactions)
 
-model.dens <- glmer(pred.env ~ pred.env + Treat + Year + Sp + pred.env:Sp + pred.env:Treat + pred.env:Year + (1 | Plot), family=gaussian, data = data.pred)
+model.dens <- glmer(pred.env ~ pred.env + Treat + Year + Sp + pred.env:Sp + pred.env:Treat + pred.env:Year + (1 | Plot), family = gaussian, data = data.pred)
 summary(model.dens)
 (aov.dens <- anova(model.dens))
 
-model.env <- glmer(pred.dens ~ pred.dens +  Treat + Year + Sp + pred.dens:Sp + pred.dens:Treat + pred.dens:Year + (1 | Plot), family=gaussian, data = data.pred)
+model.env <- glmer(pred.dens ~ pred.dens +  Treat + Year + Sp + pred.dens:Sp + pred.dens:Treat + pred.dens:Year + (1 | Plot), family = gaussian, data = data.pred)
 summary(model.env)
 (aov.env <- anova(model.env))
 
-model.fate <- glmer(fate ~ pred.dens + pred.env + Year + Treat + Sp + pred.dens:pred.env + pred.dens:Sp + pred.dens:Treat + pred.dens:Year + pred.env:Sp + pred.env:Treat + pred.env:Year + (1 | Plot), family=binomial, data = data.pred[!is.na(data.pred$fate),])
+model.fate <- glmer(fate ~ pred.dens + pred.env + Year + Treat + Sp + pred.dens:pred.env + pred.dens:Sp + pred.dens:Treat + pred.dens:Year + pred.env:Sp + pred.env:Treat + pred.env:Year + (1 | Plot), family = binomial, data = data.pred[!is.na(data.pred$fate),])
 (aov <- anova(model.fate))
 summary(model.fate)
 lmerTest::rand(model.fate)

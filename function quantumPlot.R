@@ -71,12 +71,14 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
 }
 
 
-ppp.cat <- function (data) {
+ppp.cat <- function(data) {
   
-  if (is.null(data$obs) == F) output <- ifelse (data$obs < data$lo, - 1, ifelse (data$obs > data$hi, 1, 0))
-  if (is.null(data$pooliso) == F) output <- ifelse ((sqrt(data$pooliso/pi) - data$r) < (sqrt(data$poollo/pi) - data$r), - 1, 
-                                                    ifelse ((sqrt(data$pooliso/pi) - data$r) > (sqrt(data$poolhi/pi) - data$r), 1, 0))
+  if (is.null(data$obs) == F) output <- ifelse(data$obs < data$lo, -1, ifelse(data$obs > data$hi, 1, 0))
+  if (is.null(data$pooliso) == F) output <- ifelse( (sqrt(data$pooliso/pi) - data$r) < (sqrt(data$poollo/pi) - data$r), -1, 
+                                                    ifelse( (sqrt(data$pooliso/pi) - data$r) > (sqrt(data$poolhi/pi) - data$r), 1, 0))
+  if (is.null(data$iso) == F) output <- ifelse( (sqrt(data$iso/pi) - data$r) < (sqrt(data$lo/pi) - data$r), -1, 
+                                                    ifelse((sqrt(data$iso/pi) - data$r) > (sqrt(data$hi/pi) - data$r), 1, 0))
   
-  return (output)
+  return(output)
   
 }
