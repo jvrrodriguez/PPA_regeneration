@@ -54,7 +54,7 @@ Year <- c(2008, 2009, 2010, 2011, 2012, 2013)[1:4]
 nsim <- 199
 fit.gam = FALSE
 save.output <- TRUE
-gof.int <- 5 # five consecutive values out of the confidence intervals
+gof.int <- 3 # number of consecutive values out of the confidence intervals
 
 summary.year <- data.frame(); summary.plot <- summary.year; 
 summary.size.plot <- summary.year; summary.size <- summary.year; summary.rec.Q <- summary.year; summary.ad.Q <- summary.year
@@ -878,7 +878,7 @@ for (j in 1:length(Year)) {
     g.E.ac.test <- dclf.test(g.E.ac[[i]], rinterval = g.E.ac.interval)
     
     g.E.ac.gof <- rbind(g.E.ac.gof, 
-                        data.frame(Plot = i, r.min = g.E.ac.interval[1], r.max = g.E.rec.interval[2], g.E.ac.test$statistic[1], p.value = g.E.ac.test$p.value))
+                        data.frame(Plot = i, r.min = g.E.ac.interval[1], r.max = g.E.ac.interval[2], g.E.ac.test$statistic[1], p.value = g.E.ac.test$p.value))
     
     #Jdif.E.size.cat <- cbind(Jdif.E.size[[i]]$r, Jdif.E.size.cat, ppp.cat(Jdif.E.size[[i]]))
     
@@ -1011,7 +1011,6 @@ for (j in 1:length(Year)) {
                        data.frame(Plot = "Ctrl", r.min = markcor.E.size.c.rec.ctrl.interval[1], r.max = markcor.E.size.c.rec.ctrl.interval[2], markcor.E.size.c.rec.ctrl.test$statistic[1], p.value = markcor.E.size.c.rec.ctrl.test$p.value),
                        data.frame(Plot = "Thnn", r.min = markcor.E.size.c.rec.thnn.interval[1], r.max = markcor.E.size.c.rec.thnn.interval[2], markcor.E.size.c.rec.thnn.test$statistic[1], p.value = markcor.E.size.c.rec.thnn.test$p.value))
     
-    
     par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
     plot(markcor.E.size.c.ad.ctrl, legend = F)
     plot(markcor.E.size.c.ad.thnn, legend = F)
@@ -1093,7 +1092,7 @@ for (j in 1:length(Year)) {
   cat("Test differences in fate \n")
   
   Jdif.E.fate.rec <- list(); K012.E.fate.rec.i <- Jdif.E.fate.rec
-  markcor.E.size.c.fate.rec <- list()
+  markcor.E.size.c.fate.rec <- list(); null_model_Kmulti <- list()
   Jdif.E.fate.rec.cat <- NULL; K012.E.fate.rec.i.cat <- NULL
   Jdif.E.fate.rec.ctrl <- NULL; Jdif.E.fate.rec.thnn <- NULL
   K012.E.fate.rec.i.ctrl <- NULL; K012.E.fate.rec.i.thnn <- NULL
@@ -1135,10 +1134,10 @@ for (j in 1:length(Year)) {
       J <- (marx == "RcDead")
 
       #kkk <- envelope(data.fate.rec.i$ppp[[i]], fun = K012, nsim = nsim, i = "RcSurv", j = "RcDead", fijo = "Tree", nrank = 5)
-      null_model_Kmulti <- envelope(data.fate.rec.i$ppp[[i]], fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5, savefuns = TRUE, savepatterns = TRUE)
-      K012.E.fate.rec.i.test <- dclf.test(null_model_Kmulti, rinterval = K012.E.fate.rec.i.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
+      null_model_Kmulti[[i]] <- envelope(data.fate.rec.i$ppp[[i]], fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5, savefuns = TRUE, savepatterns = TRUE)
+      null_model_Kmulti.test <- dclf.test(null_model_Kmulti[[i]], rinterval = K012.E.fate.rec.i.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
       K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof, 
-                          data.frame(Plot = i, r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.test$statistic[1], p.value = K012.E.fate.rec.i.test$p.value))
+                          data.frame(Plot = i, r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], null_model_Kmulti.test$statistic[1], p.value = null_model_Kmulti.test$p.value))
       
       mark.corr.c.fate <- data.size.c.rec$ppp[[i]] 
       mark.corr.c.fate$marks <- data.frame(SIZE = data.size.c.rec$ppp[[i]]$marks, FATE = data.fate.rec$ppp[[i]]$marks) 
@@ -1174,20 +1173,33 @@ for (j in 1:length(Year)) {
     
     K012.E.fate.rec.i.ctrl <- pool(K012.E.fate.rec.i[[3]]$k01, K012.E.fate.rec.i[[4]]$k01, K012.E.fate.rec.i[[9]]$k01)
     K012.E.fate.rec.i.thnn <- pool(K012.E.fate.rec.i[[2]]$k01, K012.E.fate.rec.i[[5]]$k01, K012.E.fate.rec.i[[7]]$k01)
+    
+    null_model_Kmulti.ctrl <- pool(null_model_Kmulti[[3]], null_model_Kmulti[[4]], null_model_Kmulti[[9]], savefuns = TRUE)
+    null_model_Kmulti.thnn <- pool(null_model_Kmulti[[2]], null_model_Kmulti[[5]], null_model_Kmulti[[7]], savefuns = TRUE)
+    
+    # K012.E.fate.rec.i.interval <- as.numeric(colMeans(K012.E.fate.rec.i.gof[2:3]))
+    cons.values <- rollsum(ppp.cat(null_model_Kmulti.ctrl), gof.int, fill = NA, align = "right") == gof.int
+    null_model_Kmulti.ctrl.interval <- c(min(null_model_Kmulti.ctrl$r[cons.values], na.rm = T), max(null_model_Kmulti.ctrl$r[cons.values], na.rm = T))
+    if (is.infinite(null_model_Kmulti.ctrl.interval[1])) null_model_Kmulti.ctrl.interval <- c(min(null_model_Kmulti.ctrl$r), max(null_model_Kmulti.ctrl$r))
+    null_model_Kmulti.ctrl.test <- dclf.test(null_model_Kmulti.ctrl, rinterval = null_model_Kmulti.ctrl.interval)
+    
+    cons.values <- rollsum(ppp.cat(null_model_Kmulti.thnn), gof.int, fill = NA, align = "right") == gof.int
+    null_model_Kmulti.thnn.interval <- c(min(null_model_Kmulti.thnn$r[cons.values], na.rm = T), max(null_model_Kmulti.ctrl$r[cons.values], na.rm = T))
+    if (is.infinite(null_model_Kmulti.thnn.interval[1])) null_model_Kmulti.thnn.interval <- c(min(null_model_Kmulti.thnn$r), max(null_model_Kmulti.thnn$r))
+    null_model_Kmulti.thnn.test <- dclf.test(null_model_Kmulti.thnn, rinterval = null_model_Kmulti.thnn.interval)
+    
+    # K012.E.fate.rec.i.ac.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.ac.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
+    
+    K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof,
+                          data.frame(Plot = "Ctrl", r.min = null_model_Kmulti.ctrl.interval[1], r.max = null_model_Kmulti.ctrl.interval[2], null_model_Kmulti.ctrl.test$statistic[1], p.value = null_model_Kmulti.ctrl.test$p.value),
+                          data.frame(Plot = "Thnn", r.min = null_model_Kmulti.thnn.interval[1], r.max = null_model_Kmulti.thnn.interval[2], null_model_Kmulti.ctrl.test$statistic[1], p.value = null_model_Kmulti.thnn.test$p.value))
+    
     markcor.E.size.c.alive.rec.ctrl <- pool(markcor.E.size.c.fate.rec[[3]]$fns[[3]], markcor.E.size.c.fate.rec[[4]]$fns[[3]], markcor.E.size.c.fate.rec[[9]]$fns[[3]])
     markcor.E.size.c.alive.rec.thnn <- pool(markcor.E.size.c.fate.rec[[2]]$fns[[3]], markcor.E.size.c.fate.rec[[5]]$fns[[3]], markcor.E.size.c.fate.rec[[7]]$fns[[3]])
+    
     markcor.E.size.c.dead.rec.ctrl <- pool(markcor.E.size.c.fate.rec[[3]]$fns[[2]], markcor.E.size.c.fate.rec[[4]]$fns[[2]], markcor.E.size.c.fate.rec[[9]]$fns[[2]])
     markcor.E.size.c.dead.rec.thnn <- pool(markcor.E.size.c.fate.rec[[2]]$fns[[2]], markcor.E.size.c.fate.rec[[5]]$fns[[2]], markcor.E.size.c.fate.rec[[7]]$fns[[2]])
     
-    # No se puede calcular el gof para la agrupacion de salidas
-    # K012.E.fate.rec.i.interval <- as.numeric(colMeans(K012.E.fate.rec.i.gof[2:3]))
-    # K012.E.fate.rec.i.ac.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.ac.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
-    # K012.E.fate.rec.i.ctrl.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.interval)
-    # K012.E.fate.rec.i.thnn.test <- dclf.test(K012.E.fate.rec.i.thnn, rinterval = K012.E.fate.rec.i.interval)
-    # K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof,
-    #                      data.frame(Plot = "Ctrl", r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.ctrl.test$statistic[1], p.value = K012.E.fate.rec.i.ctrl.test$p.value),
-    #                      data.frame(Plot = "Thnn", r.min = K012.E.fate.rec.i.interval[1], r.max = K012.E.fate.rec.i.interval[2], K012.E.fate.rec.i.thnn.test$statistic[1], p.value = K012.E.fate.rec.i.thnn.test$p.value))
-
     par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
     plot(Jdif.E.fate.rec.ctrl, main = NULL, legend = F)
     plot(Jdif.E.fate.rec.thnn, main = NULL, legend = F)
@@ -1699,6 +1711,7 @@ for (j in 1:length(Year)) {
     Jdif.E.fate.rec.cat, Jdif.E.fate.rec.gof,
     K012.E.fate.rec.i.cat, K012.E.fate.rec.i.gof,
     Jdif.E.fate.rec.ctrl, Jdif.E.fate.rec.thnn, K012.E.fate.rec.i.ctrl, K012.E.fate.rec.i.thnn,
+    null_model_Kmulti.ctrl, null_model_Kmulti.thnn, 
     Jdif.E.fate.ad.cat, 
     markcor.E.size.c.alive.rec.cat, markcor.E.size.c.dead.rec.cat,
     markcor.E.size.c.alive.rec.thnn, markcor.E.size.c.alive.rec.ctrl,

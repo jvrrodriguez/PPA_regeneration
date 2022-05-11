@@ -12,12 +12,19 @@ Plot.list <- list()
 meanData <- NULL
 save.output <- TRUE
 
-for (i in 4:length(data)) {
+signif.num <- function(x) {
+  symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
+         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+         symbols = c("***", "**", "*", ".", "n.s"))
+}
+
+for (i in 1:length(data)) {
 
   data.cat <- NULL
   data.gof <- NULL
   
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],"_Plot.pdf"), width = 9, height = 5)  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],"_Plot.pdf"), 
+                            width = 9, height = 8)  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -70,9 +77,17 @@ for (i in 4:length(data)) {
     
     Plot.list[[j]] <- ggplot(data.cat[data.cat$Plot == j, ], aes(x = r, y = Year)) + 
       geom_raster(aes(fill = value)) + 
-      geom_segment(aes(x = x.min, y = y, xend = x.max, yend = y, linetype = "dotted", alpha = 1/10), 
-                   data = data.frame(x.min = data.gof$r.min[data.gof$Plot == j], x.max = data.gof$r.max[data.gof$Plot == j], y = unique(data.gof$Year))) +
+      
       scale_fill_gradient2(low = "indianred3", mid = "white", high = "darkolivegreen3", midpoint = .0) +
+      
+      geom_segment(aes(x = r.min, y = Year, xend = r.max, yend = Year, size = 0.005, alpha = 1/10), 
+                   data = data.gof[data.gof$Plot == j,]) +
+      
+      geom_label(aes(x = r.min, y = Year, label = ""), data = data.gof[data.gof$Plot == j,], alpha = 1/10) +
+      geom_label(aes(x = r.max, y = Year, label = ""), data = data.gof[data.gof$Plot == j,], alpha = 1/10) +
+      
+      geom_text(aes(label = paste("GoF p =", signif.num(p.value)), r.min + 0.0, size = 0.005, vjust = -0.8, hjust = "left"), data = data.gof[data.gof$Plot == j,]) +
+      
       labs(x = "Distance (m)", y = "Year", title = paste("Plot", j, "//", Treat2[j])) +
       theme_bw() + theme(axis.text.x = element_text(size = 9, angle = 0, vjust = 0.3),
                          axis.text.y = element_text(size = 9),
