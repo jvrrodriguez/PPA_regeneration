@@ -12,13 +12,20 @@ log.data <- c(T, F, T, F, F, F, T, T)
 y_inter <- c(1, 0, 1, 1, 0, 0, 1, 1)
 save.output <- T
 
+signif.num <- function(x) {
+  symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
+         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+         symbols = c("***", "**", "*", ".", "n.s"))
+}
+
 
 for (i in 1:length(data)) {
   
   data.cat <- NULL
   data.gof <- NULL
   
-  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],".pdf"), width = 7, height = 5)  
+  if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],".pdf"), 
+                            width = 8, height = 7)  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -59,15 +66,24 @@ for (i in 1:length(data)) {
   
   Treat <- unique(data.cat$Treat)
   Plot.list <- list()
+  #https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_segment.html
   
   for (j in Treat) { 
     
-    Plot.list[[j]] <- ggplot(data.cat[data.cat$Treat == j,], aes(x = r, y = Year)) + 
+    Plot.list[[j]] <- ggplot(aes(x = r, y = Year), data = data.cat[data.cat$Treat == j,]) + 
       geom_raster(aes(fill = value)) + 
-      geom_segment(aes(x = x.min, y = y, xend = x.max, yend = y, linetype = "dotted", alpha = 1/10), 
-                   data = data.frame(x.min = data.gof$r.min[data.gof$Plot == j], x.max = data.gof$r.max[data.gof$Plot == j], y = unique(data.gof$Year))) +
       # geom_vline(xintercept = data.gof$r.max[data.gof$Plot == j]) +
       scale_fill_gradient2(low = "indianred3", mid = "white", high = "darkolivegreen3", midpoint = .0) +
+      
+      #para que salga proporcional, el atributo "size" hay que ir cambiandolo en las dos lineas, sino se queda uno mas pequeño que el otro.
+      geom_segment(aes(x = r.min, y = Year, xend = r.max, yend = Year, size = 0.005, alpha = 1/10), 
+                   data = data.gof[data.gof$Plot == j,]) +
+      
+      geom_label(aes(x = r.min, y = Year, label = ""), data = data.gof[data.gof$Plot == j,], alpha = 1/10) +
+      geom_label(aes(x = r.max, y = Year, label = ""), data = data.gof[data.gof$Plot == j,], alpha = 1/10) +
+      
+      geom_text(aes(label = paste("GoF", signif.num(p.value)), r.min + 0.0, size = 0.005, vjust = -0.8, hjust = "left"), data = data.gof[data.gof$Plot == j,]) +
+
       labs(x = "Distance r (m)", y = "Year") +
       scale_y_continuous(trans = "reverse") + 
       theme_bw() + theme(axis.text.x = element_text(size = 9, angle = 0, vjust = 0.3),

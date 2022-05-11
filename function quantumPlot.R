@@ -24,12 +24,12 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
     
   gg_quantomPlot <- ggplot(env.data, aes(r, obs)) +
     # plot observed value
-    geom_line(colour=c("#4d4d4d")) +
+    geom_line(colour = c("#4d4d4d")) +
     # plot simulation envelopes
-    geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.1, colour=c("#e0e0e0")) +
+    geom_ribbon(aes(ymin = lo,ymax = hi),alpha = 0.1, colour = c("#e0e0e0")) +
     # axes names and limits
     #ylim(min(env.data$obs)-0.5, max(env.data$obs)+2) +
-    labs(x="Distance r (m)", y=y_name) +
+    labs(x = "Distance r (m)", y = y_name) +
     # plot expected value, according to null model
     geom_hline(yintercept = y_intercept, linetype = "dashed", colour = c("#999999")) + 
     # make it look beautiful
@@ -42,13 +42,13 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
      
      gg_quantomPlot <- ggplot(env.data, aes(r, obs)) +
        # plot observed value
-       geom_line(colour=c("#4d4d4d")) + scale_y_log10() +
+       geom_line(colour = c("#4d4d4d")) + scale_y_log10() +
        #ylim(min(env.data$obs, na.rm=T) - 0.5, max(env.data$hi, na.rm=T) - max(env.data$hi, na.rm=T) * 0.1) +
        # plot simulation envelopes
-       geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.1, colour=c("#e0e0e0")) +
+       geom_ribbon(aes(ymin = lo,ymax = hi), alpha = 0.1, colour = c("#e0e0e0")) +
        # axes names and limits
        #ylim(min(env.data$obs)-0.5, max(env.data$obs)+2) +
-       labs(x="Distance r (m)", y=y_name) +
+       labs(x = "Distance r (m)", y = y_name) +
        # plot expected value, according to null model
        geom_hline(yintercept = y_intercept, linetype = "dashed", colour = c("#999999")) +
        # make it look beautiful
@@ -61,15 +61,17 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
      
      # plot 'Quantums'
       gg_quantomPlot + 
-       geom_rug(data=env.data[env.data$obs > env.data$hi,], sides="b", colour=colour[1]) +
-       geom_rug(data=env.data[env.data$obs < env.data$lo,], sides="b", colour=colour[2]) +
-       geom_rug(data=env.data[env.data$obs >= env.data$lo & env.data$obs <= env.data$hi,], sides="b", color=colour[3])
+       geom_rug(data = env.data[env.data$obs > env.data$hi,], sides = "b", colour = colour[1]) +
+       geom_rug(data = env.data[env.data$obs < env.data$lo,], sides = "b", colour = colour[2]) +
+       geom_rug(data = env.data[env.data$obs >= env.data$lo & env.data$obs <= env.data$hi,], sides = "b", color = colour[3])
      
    }
     
   return(gg_quantomPlot)
 }
 
+
+# para categorizar cuando sale el observado del intervalo de confianza
 
 ppp.cat <- function(data) {
   
@@ -80,5 +82,26 @@ ppp.cat <- function(data) {
                                                     ifelse((sqrt(data$iso/pi) - data$r) > (sqrt(data$hi/pi) - data$r), 1, 0))
   
   return(output)
+  
+}
+
+# ppp.cat <- function(data) {
+#   
+#   if (is.null(data$obs) == F) output <- ifelse(data$obs < data$lo, -1, ifelse(data$obs > data$hi, 1, 0))
+#   if (is.null(data$iso) == F) output <- ifelse(data$iso < data$lo, -1, ifelse(data$iso > data$hi, 1, 0))
+#   
+#   return(output)
+#   
+# }
+
+# para obtener un rango de valores donde sale fuera el intervalo de confianza
+
+calc.int <- function(data, r.int) {
+  
+  cons.values <- rollsum(abs(ppp.cat(data)), r.int, fill = NA, align = "center") == r.int
+  data.interval <- c(min(x$r[cons.values], na.rm = T), max(data$r[cons.values], na.rm = T))
+  if (is.infinite(data.interval[1])) data.interval <- c(min(data$r), max(data$r))
+  
+  return(data.interval)
   
 }

@@ -22,8 +22,8 @@ source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function 
 Year <- c(2008, 2009, 2010, 2011)
 Plot <- c(2,3,4,5,7,9)
 save.output <- TRUE
-Var.dens <- c("(Intercept)", "Treat30%",  "Dens.adult", "Dens.rec", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
-Var.env <- c("(Intercept)", "Treat30%", "Canopy", "CanOpen", "LAI", "DiffBelow", "DiffBelow.Yr", "N.Sunflecks", "Mdn.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Pter", "Rub", "Scl") #"MDT",  "MDS",  "Lad.var", "Lad.cv", "Lad.shan",
+Var.dens <- c("(Intercept)", "Treat30%",  "Dens.adult", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
+Var.env <- c("(Intercept)", "Treat30%", "Canopy", "CanOpen", "LAI", "DiffBelow", "N.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Pter", "Rub", "Scl") #"MDT",  "MDS",  "Lad.var", "Lad.cv", "Lad.shan",
 
 save.output <- TRUE
 
@@ -53,7 +53,9 @@ for (i in 1:length(Year)) {
   
   load(file = paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Reports/PPA_", Year[i],".RData"))
   
-  data.pred <- rbind(data.pred, data.frame(Year = as.factor(Year[i]), pred.dens.sp[,1:3], fate = pred.dens.fate[,3], pred.dens = pred.dens.sp[,4], pred.env = pred.env.sp[,4]))
+  if (i != length(Year)) data.pred <- rbind(data.pred, data.frame(Year = as.factor(Year[i]), pred.dens.sp[,1:3], fate = pred.dens.fate[,3], pred.dens = pred.dens.sp[,4], pred.env = pred.env.sp[,4]))
+  #include something to generate false data but to maintain data.frame structure
+  if (i == length(Year)) data.pred <- rbind(data.pred, data.frame(Year = as.factor(Year[i]), pred.dens.sp[,1:3], fate = sample(c(1, 0), length(pred.dens.sp[,3]), replace = T), pred.dens = pred.dens.sp[,4], pred.env = pred.env.sp[,4]))
   
   estimate.env.tmp <- array(NA, length(Var.env))
   p.env.tmp <- array(NA, length(Var.env))
@@ -175,24 +177,24 @@ estimate.dens.plot <- estimate.dens.plot[order(estimate.dens.plot$Plot),]
 p.env.plot <- p.env.plot[order(p.env.plot$Plot),]
 p.dens.plot <- p.dens.plot[order(p.dens.plot$Plot),]
 
-p.env.plot <-  ifelse(p.env.plot[,3:17] == 1, levels(var.env.Plot[[j]]$Ztest)[[1]],
-       ifelse(p.env.plot[,3:17] == 2, levels(var.env.Plot[[j]]$Ztest)[[2]],
-             ifelse(p.env.plot[,3:17] == 3, levels(var.env.Plot[[j]]$Ztest)[[3]], 
-                    ifelse(is.na(p.env.plot[,3:17]), "", " "))))
+p.env.plot <-  ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 1, levels(var.env.Plot[[j]]$Ztest)[[1]],
+       ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 2, levels(var.env.Plot[[j]]$Ztest)[[2]],
+             ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 3, levels(var.env.Plot[[j]]$Ztest)[[3]], 
+                    ifelse(is.na(p.env.plot[,3:dim(p.env.plot)[2]]), "", " "))))
 
-p.dens.plot <-  ifelse(p.dens.plot[,3:9] == 1, levels(var.dens.Plot[[j]]$Ztest)[[1]],
-                      ifelse(p.dens.plot[,3:9] == 2, levels(var.dens.Plot[[j]]$Ztest)[[2]],
-                             ifelse(p.dens.plot[,3:9] == 3, levels(var.dens.Plot[[j]]$Ztest)[[3]], 
-                                    ifelse(is.na(p.dens.plot[,3:9]), "", " "))))
+p.dens.plot <-  ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 1, levels(var.dens.Plot[[j]]$Ztest)[[1]],
+                      ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 2, levels(var.dens.Plot[[j]]$Ztest)[[2]],
+                             ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 3, levels(var.dens.Plot[[j]]$Ztest)[[3]], 
+                                    ifelse(is.na(p.dens.plot[,3:dim(p.dens.plot)[2]]), "", " "))))
 
-colnames(estimate.env.plot)[3:17] <- Var.env
-colnames(estimate.dens.plot)[3:9] <- Var.dens
+colnames(estimate.env.plot)[3:dim(p.env.plot)[2]] <- Var.env
+colnames(estimate.dens.plot)[3:dim(p.dens.plot)[2]] <- Var.dens
 
 estimate.env.plot <- format(estimate.env.plot, trim = TRUE, digits = 3, scientific = 5)
 estimate.dens.plot <- format(estimate.dens.plot, trim = TRUE, digits = 3, scientific = 5)
 
-estimate.env.plot2 <- matrix(paste(as.matrix(estimate.env.plot[,3:17]), as.matrix(p.env.plot)), ncol = 15)
-estimate.dens.plot2 <- matrix(paste(as.matrix(estimate.dens.plot[,3:9]), as.matrix(p.dens.plot)), ncol = 7)
+estimate.env.plot2 <- matrix(paste(as.matrix(estimate.env.plot[,3:dim(p.env.plot)[2]]), as.matrix(p.env.plot)), ncol = 13) #modificar el tamaño en funcon de las variables
+estimate.dens.plot2 <- matrix(paste(as.matrix(estimate.dens.plot[,3:dim(p.dens.plot)[2]]), as.matrix(p.dens.plot)), ncol = 6)
 
 colnames(estimate.env.plot2) <- Var.env
 colnames(estimate.dens.plot2) <- Var.dens
@@ -235,8 +237,11 @@ if (save.output == T) dev.off()
 
 if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.sp.pdf", width = 6, height = 9)  
 
-prow <- plot_grid(list.env.sp[[1]] + theme(legend.position = "none"), list.dens.sp[[1]] + theme(legend.position = "none"), list.env.sp[[2]] + theme(legend.position = "none"), list.dens.sp[[2]] + theme(legend.position = "none"),
-                  list.env.sp[[3]] + theme(legend.position = "none"),  list.dens.sp[[3]] + theme(legend.position = "none"), list.env.sp[[4]] + theme(legend.position = "none"), list.dens.sp[[4]] + theme(legend.position = "none"),
+prow <- cowplot::plot_grid(
+                  list.env.sp[[1]] + theme(legend.position = "none"), list.dens.sp[[1]] + theme(legend.position = "none"), 
+                  list.env.sp[[2]] + theme(legend.position = "none"), list.dens.sp[[2]] + theme(legend.position = "none"),
+                  list.env.sp[[3]] + theme(legend.position = "none"), list.dens.sp[[3]] + theme(legend.position = "none"), 
+                  list.env.sp[[4]] + theme(legend.position = "none"), list.dens.sp[[4]] + theme(legend.position = "none"),
                   align = 'vh', ncol = 2,
                   labels = c("a)", "b)", "c)", "d)", "e)", "f)", "h)", "i)"),
                   hjust = -1)
@@ -250,7 +255,7 @@ legend <- get_legend(
 # add the legend to the row we made earlier. Give it one-third of 
 # the width of one plot (via rel_widths).
 print(
-  plot_grid(prow, legend, rel_widths = c(3, .4)))
+  cowplot::plot_grid(prow, legend, rel_widths = c(3, .4)))
 
 
 if (save.output == T) dev.off()
@@ -258,8 +263,9 @@ if (save.output == T) dev.off()
 
 if (save.output == T) pdf("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_estimates.fate.pdf", width = 6, height = 9)  
 
-prow <- plot_grid(list.env.fate[[1]] + theme(legend.position = "none"), list.dens.fate[[1]] + theme(legend.position = "none"),
-                  list.env.fate[[2]] + theme(legend.position = "none"),  list.dens.fate[[2]] + theme(legend.position = "none"), 
+prow <- cowplot::plot_grid(
+                  list.env.fate[[1]] + theme(legend.position = "none"), list.dens.fate[[1]] + theme(legend.position = "none"),
+                  list.env.fate[[2]] + theme(legend.position = "none"), list.dens.fate[[2]] + theme(legend.position = "none"), 
                   list.env.fate[[3]] + theme(legend.position = "none"), list.dens.fate[[3]] + theme(legend.position = "none"),
                   align = 'vh', ncol = 2,
                   labels = c("a)", "b)", "c)", "d)", "e)", "f)"),
