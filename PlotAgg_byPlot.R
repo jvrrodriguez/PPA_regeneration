@@ -14,15 +14,6 @@ Plot.list <- list()
 meanData <- NULL
 save.output <- TRUE
 
-<<<<<<< HEAD
-=======
-signif.num <- function(x) {
-  symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-         symbols = c("***", "**", "*", ".", "n.s"))
-}
-
->>>>>>> 1a84b4b97728566d7c2fc4e4242171b860b1b305
 for (i in 1:length(data)) {
 
   data.cat <- NULL
