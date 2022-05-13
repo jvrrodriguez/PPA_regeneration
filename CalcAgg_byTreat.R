@@ -2,28 +2,31 @@
 ####   ANALIZE POINT DATA           ######
 ##########################################
 
+library(raster)
 library(shapefiles)
+
 library(spatstat.core)
 library(spatstat.local)
 library(spatstat.utils)
-library(raster)
 #library(spatialEco) #https://github.com/jeffreyevans/spatialEco
 library(shar) #https://r-spatialecology.github.io/shar/
 library(ecespa)
 library(onpoint)
-library(splines)
-library(reshape2)
+
+library(MASS)
 library(zoo)
+library(splines)
 
 library(ggplot2)
 library(gridExtra)
 library(dplyr)
+library(reshape2)
 library(grid)
-library(MASS)
 library(cowplot)
+library(corrplot)
 library(rasterVis)
 
-#Incluye algunas funciones para resumir la información
+#Incluye funciones para resumir la información
 source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
 
 #datos con la informacion de posicion de las plantas
@@ -127,9 +130,8 @@ for (j in 1:length(Year)) {
     
     source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
     
-    load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/MDS-MDT_A", i, ".RData"))
-    #im.MDTS <- normalize_stack(im.MDTS)
-    
+    #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/MDS-MDT_A", i, ".RData"))
+
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Light_A", i, ".RData"))
     im.Light <- normalize_stack(im.Light)
     im.Light$N.Sunflecks$v <- ifelse(is.nan(im.Light$N.Sunflecks$v), 1,  im.Light$N.Sunflecks$v)
@@ -153,17 +155,14 @@ for (j in 1:length(Year)) {
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Canopy_A", i, ".RData"))
     ras.Canopy <- stack(aggregate(ras.Canopy.join[[2]], fact = 5, na.rm = TRUE))
     names(ras.Canopy) <- "Canopy"
-    # im.Canopy <- normalize_stack(listof( Canopy=raster.as.im(ras.Canopy)))
     im.Canopy <- normalize_stack(im.Canopy)
     
     #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Lad_A", i, ".RData"))
-    #im.lad <- normalize_stack(im.lad)
     
     ras.all <- stack((ras.Light), (ras.Understory), (ras.Canopy)) #ras.MDTS, ras.lad
     matrix.env[[i]] <- layerStats(ras.all,'pearson', na.rm = T)$`pearson correlation coefficient`
     matrix.env[[i]] <- ifelse(is.finite(matrix.env[[i]]), matrix.env[[i]], NA)
     
-    library(corrplot)
     corrplot(matrix.env[[i]])
     
     # Setup point data --------------------------------------------------------------
@@ -402,27 +401,12 @@ for (j in 1:length(Year)) {
     
     # Setup covariates
     
-    # if (length(im.Understory) == 5) {
-    
-    data.sp$covs[[i]] <- listof(MDT = im.MDTS[[1]], MDS = im.MDTS[[2]],
-                                #Lad.var = im.lad[[1]], Lad.cv= im.lad[[2]], Lad.shan = im.lad[[3]],
+    data.sp$covs[[i]] <- listof(#MDT = im.MDTS[[1]], MDS = im.MDTS[[2]],
                                 CanOpen = im.Light[[1]], LAI = im.Light[[2]], DirectBelow = im.Light[[3]], DiffBelow = im.Light[[4]], DirectBelow.Yr = im.Light[[5]], DiffBelow.Yr = im.Light[[6]], N.Sunflecks = im.Light[[7]], Mdn.Sunflecks = im.Light[[8]], Max.Sunflecks = im.Light[[9]],
                                 Canopy = im.Canopy[[1]], 
                                 Fs = im.Understory[[1]], Hed = im.Understory[[2]], Pter = im.Understory[[3]], Rub = im.Understory[[4]], Scl = im.Understory[[5]],
                                 Dens = dens.all$im[[i]], Dens.adult = dens.size$im[[i]]["Adult"][[1]], Dens.rec = dens.size$im[[i]]["Recruit"][[1]], Dens.size = dens.size.c$im[[i]], Dens.size.rec = dens.size.c.rec$im[[i]],
                                 Dens.Fs.rec = dens.sp$im[[i]]["Fs"][[1]], Dens.Qh.rec = dens.sp$im[[i]]["Qh"][[1]], Dens.Qi.rec = dens.sp$im[[i]]["Qi"][[1]], Dens.rich.rec = dens.sp.rec.rich$im[[i]], Dens.shan.rec = dens.sp.rec.shan$im[[i]])
-    # } else {
-    #   
-    #   data.sp$covs[[i]] <- listof(MDT = im.MDTS[[1]], MDS = im.MDTS[[2]],
-    #                               Lad.var = im.lad[[1]], Lad.cv= im.lad[[2]], Lad.shan = im.lad[[3]],
-    #                               CanOpen = im.Light[[1]], LAI = im.Light[[2]], DirectBelow = im.Light[[3]], DiffBelow = im.Light[[4]], DirectBelow.Yr = im.Light[[5]], DiffBelow.Yr = im.Light[[6]], N.Sunflecks = im.Light[[7]], Mdn.Sunflecks = im.Light[[8]], Max.Sunflecks = im.Light[[9]],
-    #                               Canopy = im.Canopy[[1]], 
-    #                               Hed = im.Understory[[1]], Pter = im.Understory[[2]], Rub = im.Understory[[3]], Scl = im.Understory[[4]],
-    #                               Dens = dens.all$im[[i]], Dens.adult = dens.size$im[[i]]["Adult"][[1]], Dens.rec = dens.size$im[[i]]["Recruit"][[1]], Dens.size = dens.size.c$im[[i]], Dens.size.rec = dens.size.c.rec$im[[i]],
-    #                               Dens.Fs.rec = dens.sp$im[[i]]["Fs"][[1]], Dens.Qh.rec = dens.sp$im[[i]]["Qh"][[1]], Dens.Qi.rec = dens.sp$im[[i]]["Qi"][[1]], Dens.rich.rec = dens.sp.rec.rich$im[[i]], Dens.shan.rec = dens.sp.rec.shan$im[[i]])
-    #   
-    # }
-    
     
     #Summarize data sets
     
@@ -509,8 +493,6 @@ for (j in 1:length(Year)) {
   print(
     plot_grid(prow, legend, rel_widths = c(3, .4)))
   
-  library(rasterVis)
-  
   var.env <- c("Canopy", "CanOpen", "LAI", "DiffBelow", "N.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Rub", "Pter", "Scl")
   var.dens <- c("Dens.adult", "Dens.rec", "Dens.rich.rec", "Dens.shan.rec")
   var.all <- c(var.env, var.dens)
@@ -528,53 +510,6 @@ for (j in 1:length(Year)) {
     )
     
   }
-  
-  
-  
-  # Test general patterns ----------------------------------------------------
-  
-  cat("Test overall patterns \n")
-  
-  # no se calcula esto
-  
-  # L.E <- list(); g.E <- L.E; kNN.E <- L.E; F.E <- L.E
-  # L.E.cat <- NULL; g.E.cat <- NULL; kNN.E.cat <- NULL; F.E.cat <- NULL
-  # 
-  # for (i in Plots) {
-  #   
-  #   #L.E[[i]] <- envelope(data.size$ppp[[i]], Lest, r = seq(0,10,0.05), nsim=nsim, fix.n=TRUE, correction="Ripley", savefuns=TRUE, savepatterns = TRUE)
-  #   g.E[[i]] <- envelope(data.size$ppp[[i]], pcf, r = seq(0,4,0.02), nsim = nsim, fix.n = TRUE, correction = "Ripley", savefuns = TRUE, savepatterns = TRUE)
-  #   kNN.E[[i]] <- envelope(data.size$ppp[[i]], Gest, r = seq(0,1,0.01), nsim = nsim, fix.n = TRUE, correction = "rs", savefuns = TRUE, savepatterns = TRUE)
-  #   #F.E[[i]] <- envelope(data.size$ppp[[i]], Fest, r = seq(0,1,0.01), nsim=nsim, fix.n=TRUE, correction="rs", savefuns=TRUE, savepatterns = TRUE)
-  #   
-  #   #L.E.cat <- cbind(L.E[[i]]$r, L.E.cat, ppp.cat(L.E[[i]]))
-  #   g.E.cat <- cbind(g.E[[i]]$r, g.E.cat, ppp.cat(g.E[[i]]))
-  #   kNN.E.cat <- cbind(kNN.E[[i]]$r, kNN.E.cat, ppp.cat(kNN.E[[i]]))
-  #   #F.E.cat <- cbind(F.E[[i]]$r, F.E.cat, ppp.cat(F.E[[i]]))
-  #   
-  # }
-  # 
-  # #L.E.ctrl <- pool(L.E[[3]], L.E[[4]], L.E[[9]]); L.E.thnn <- pool(L.E[[2]], L.E[[5]], L.E[[7]])
-  # g.E.ctrl <- pool(g.E[[3]], g.E[[4]], g.E[[9]])
-  # g.E.thnn <- pool(g.E[[2]], g.E[[5]], g.E[[7]])
-  # kNN.E.ctrl <- pool(kNN.E[[3]], kNN.E[[4]], kNN.E[[9]])
-  # kNN.E.thnn <- pool(kNN.E[[2]], kNN.E[[5]], kNN.E[[7]])
-  # #F.E.ctrl <- pool(F.E[[3]], F.E[[4]], F.E[[9]]); F.E.thnn <- pool(F.E[[2]], F.E[[5]], F.E[[7]])
-  # 
-  # 
-  # par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
-  # #plot(L.E.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
-  # plot(g.E.ctrl, main = NULL, legend = F)
-  # plot(kNN.E.ctrl, main = NULL, legend = F)
-  # #plot(F.E.ctrl, main = NULL, legend = F)
-  # #plot(L.E.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
-  # plot(g.E.thnn, main = NULL, legend = F)
-  # plot(kNN.E.thnn, main = NULL, legend = F)
-  # #plot(F.E.thnn, main = NULL, legend = F)
-  # title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
-  # old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
-  # par(old.par)
-  
   
   # Test only recruits ----------------------------------------------------
   
@@ -617,11 +552,8 @@ for (j in 1:length(Year)) {
   #plot(L.E.rec.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
   plot(g.E.rec.ctrl, main = NULL, legend = F)
   plot(kNN.E.rec.ctrl, main = NULL, legend = F)
-  #plot(F.E.rec.ctrl, main = NULL, legend = F)
-  #plot(L.E.rec.thnn, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
   plot(g.E.rec.thnn, main = NULL, legend = F)
   plot(kNN.E.rec.thnn, main = NULL, legend = F)
-  #plot(F.E.thnn, main = NULL, legend = F)
   title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
   old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
   par(old.par)
@@ -669,7 +601,6 @@ for (j in 1:length(Year)) {
   par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   plot(g.E.t.ctrl, main = NULL, legend = F)
   plot(g.E.t.thnn, main = NULL, legend = F)
-  #plot(F.E.thnn, main = NULL, legend = F)
   title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
   old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
   par(old.par)
@@ -888,8 +819,6 @@ for (j in 1:length(Year)) {
     
     Jdif.E.rec[[i]] <- envelope(data.sp.rec$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, savefuns = TRUE, savepatterns = TRUE, simulate = expression(rlabel(data.sp.rec$ppp[[i]])))
     Jdif.E.size.c.rec[[i]] <- envelope(data.size.c.rec$ppp[[i]], markcorr, nsim = nsim, envelope = TRUE, savefuns = TRUE, savepatterns = TRUE) 
-    #markcon.E.sp[[i]] <- alltypes(data.sp$ppp[[i]], markconnect, nsim = nsim, envelope = TRUE, title = NULL, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.sp$ppp[[i]])))
-    #Jdif.E.sp.rec[[i]] <- alltypes(data.sp.rec$ppp[[i]], Jdif, r = seq(0,1,0.01), nsim = nsim, envelope = TRUE, savefuns=TRUE, savepatterns = TRUE, simulate=expression(rlabel(data.sp.rec$ppp[[i]])))
     
     Jdif.E.rec.cat <- cbind(Jdif.E.rec[[i]]$r, Jdif.E.rec.cat, ppp.cat(Jdif.E.rec[[i]]))
     Jdif.E.size.c.rec.cat <- cbind(Jdif.E.size.c.rec[[i]]$r, Jdif.E.size.c.rec.cat, ppp.cat(Jdif.E.size.c.rec[[i]]))
@@ -897,14 +826,6 @@ for (j in 1:length(Year)) {
      
     Jdif.E.rec.gof <- rbind(Jdif.E.rec.gof, 
                                       data.frame(Plot = i, Jdif.E.rec.test))
-    
-    #markcon.E.sp.tmp <- do.call(cbind, lapply(markcon.E.sp[[i]]$fns, ppp.cat))
-    #colnames(markcon.E.sp.tmp) <- apply(melt(t(markcon.E.sp[[i]]$which))[-3], 1, paste, collapse="-")
-    #markcon.E.sp.cat <- cbind(markcon.E.sp[[i]]$fns[[1]]$r, markcon.E.sp.cat, markcon.E.sp.tmp)
-    
-    #Jdif.E.sp.rec.tmp <- do.call(cbind, lapply(Jdif.E.sp.rec[[i]]$fns, ppp.cat))
-    #colnames(Jdif.E.sp.rec.tmp) <- apply(melt(t(Jdif.E.sp.rec[[i]]$which))[-3], 1, paste, collapse="-")
-    #Jdif.E.sp.rec.cat <- cbind(Jdif.E.sp.rec[[i]]$fns[[1]]$r, Jdif.E.sp.rec.cat, Jdif.E.sp.rec.tmp)
     
   }
   
@@ -918,20 +839,12 @@ for (j in 1:length(Year)) {
                                     data.frame(Plot = "Ctrl", Jdif.E.rec.ctrl.test),
                                     data.frame(Plot = "Thnn", Jdif.E.rec.thnn.test))
   
-  #if (j != length(Year)) { markcon.E.sp.ctrl <- pool(markcon.E.sp[[3]], markcon.E.sp[[4]], markcon.E.sp[[9]]); markcon.E.sp.thnn <- pool(markcon.E.sp[[2]], markcon.E.sp[[5]], markcon.E.sp[[7]]) }
-  #Jdif.E.sp.rec.ctrl <- pool(Jdif.E.sp.rec[[3]], Jdif.E.sp.rec[[4]], Jdif.E.sp.rec[[9]]); Jdif.E.sp.rec.thnn <- pool(Jdif.E.sp.rec[[2]], Jdif.E.sp.rec[[5]], Jdif.E.sp.rec[[7]])
   if (j != length(Year)) { Jdif.E.size.c.rec.ctrl <- pool(Jdif.E.size.c.rec[[3]], Jdif.E.size.c.rec[[4]], Jdif.E.size.c.rec[[9]]); Jdif.E.size.c.rec.thnn <- pool(Jdif.E.size.c.rec[[2]], Jdif.E.size.c.rec[[5]], Jdif.E.size.c.rec[[7]]) }
   
   
   par(mfrow = c(2,1), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
   plot(Jdif.E.rec.ctrl, legend = F)
   plot(Jdif.E.rec.thnn, legend = F)
-  
-  #plot(Jdif.E.sp.rec.ctrl)  
-  #plot(Jdif.E.sp.rec.thnn)
-  
-  #if (j != length(Year)) { plot(markcon.E.sp.ctrl, legend = F) }
-  #if (j != length(Year)) { plot(markcon.E.sp.thnn, legend = F) }
   
   
   
@@ -1134,7 +1047,8 @@ for (j in 1:length(Year)) {
   pred.env.fate <- data.frame()
   g.E.env.gof <- NULL
   
-  data.env <- hyperframe(MDT = listof(rep(NA, 9)), MDS = listof(rep(NA, 9)), Lad.var = listof(rep(NA, 9)), Lad.cv = listof(rep(NA, 9)), Lad.shan = listof(rep(NA, 9)), Canopy = listof(rep(NA, 9)), CanOpen = listof(rep(NA, 9)), LAI = listof(rep(NA, 9)), DiffBelow = listof(rep(NA, 9)), DiffBelow.Yr = listof(rep(NA, 9)), N.Sunflecks = listof(rep(NA, 9)), Mdn.Sunflecks = listof(rep(NA, 9)), Max.Sunflecks = listof(rep(NA, 9)), Fs = listof(rep(NA, 9)), Hed = listof(rep(NA, 9)), Rub = listof(rep(NA, 9)), Pter = listof(rep(NA, 9)), Scl = listof(rep(NA, 9)))
+  data.env <- hyperframe(Canopy = listof(rep(NA, 9)), CanOpen = listof(rep(NA, 9)), LAI = listof(rep(NA, 9)), DiffBelow = listof(rep(NA, 9)), DiffBelow.Yr = listof(rep(NA, 9)), N.Sunflecks = listof(rep(NA, 9)), Mdn.Sunflecks = listof(rep(NA, 9)), Max.Sunflecks = listof(rep(NA, 9)), Fs = listof(rep(NA, 9)), Hed = listof(rep(NA, 9)), Rub = listof(rep(NA, 9)), Pter = listof(rep(NA, 9)), Scl = listof(rep(NA, 9)))
+  # MDT = listof(rep(NA, 9)), MDS = listof(rep(NA, 9)), Lad.var = listof(rep(NA, 9)), Lad.cv = listof(rep(NA, 9)), Lad.shan = listof(rep(NA, 9)), 
   
   data.sp.rec <- cbind.hyperframe(data.sp.rec, data.env)
   
@@ -1158,13 +1072,6 @@ for (j in 1:length(Year)) {
     if (fit.gam == F & i == 9) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + CanOpen + LAI + DiffBelow + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data = data.sp$covs[[i]]) # la variable N.Sunflecks en la parcela 9 es homogenea asi que estimaria NA y daría error mas abajo
     if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
-    # } else {
-    #   
-    #   if (fit.gam == F) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + marks + MDT + MDS + Lad.var + Lad.cv + Lad.shan + Canopy + CanOpen + LAI + DiffBelow + DiffBelow.Yr + N.Sunflecks + Mdn.Sunflecks + Max.Sunflecks + Hed + Rub + Pter + Scl, data = data.sp$covs[[i]])
-    #   if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + marks + bs(MDT,3) + bs(MDS,3) + bs(Lad.var,3) + bs(Lad.cv,3) + bs(Lad.shan,3) + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(DiffBelow.Yr,3) + bs(N.Sunflecks,3) + bs(Mdn.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
-    #   
-    # }
-    
     fit.env[[i]] <- step(fit.env.full, trace = 0) 
     title.env[[i]] <- as.character(fit.env[[i]]$trend[[2]])[[2]]
     
@@ -1181,11 +1088,6 @@ for (j in 1:length(Year)) {
     data.sp.rec$pred.env[[i]] <- predict(fit.env[[i]], type = "intensity")
     
     # add variables to hyperframe
-    # data.sp.rec$MDT[[i]] <- data.sp$covs[[i]]$MDT
-    # data.sp.rec$MDS[[i]] <- data.sp$covs[[i]]$MDS
-    # data.sp.rec$Lad.var[[i]] <- data.sp$covs[[i]]$Lad.var
-    # data.sp.rec$Lad.cv[[i]] <- data.sp$covs[[i]]$Lad.cv
-    # data.sp.rec$Lad.shan[[i]] <- data.sp$covs[[i]]$Lad.shan
     data.sp.rec$Canopy[[i]] <- data.sp$covs[[i]]$Canopy
     data.sp.rec$CanOpen[[i]] <- data.sp$covs[[i]]$CanOpen
     data.sp.rec$LAI[[i]] <- data.sp$covs[[i]]$LAI
@@ -1244,6 +1146,7 @@ for (j in 1:length(Year)) {
   
   # https://www.r-graph-gallery.com/4-barplot-with-error-bar.html
   # Calculates mean, sd, se and IC
+  
   sum.env.sp <- pred.env.sp[!is.na(pred.env.sp$Sp),] %>%
     group_by(Sp, Treat) %>%
     summarise(
@@ -1288,7 +1191,7 @@ for (j in 1:length(Year)) {
   plot(kNN.E.env.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   par(old.par)
   
-  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id) #MDT + MDS + Lad.var + Lad.cv + Lad.shan + 
+  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id)
   if (fit.gam == T) fit.env.full <- mppm(ppp ~ 1 + Treat + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
   
   fit.env.red <- stepAIC(fit.env.full)
@@ -1483,12 +1386,6 @@ for (j in 1:length(Year)) {
   
   #object.size 
   if (save.output == T) save(
-    #L.E.cat, 
-    #g.E.cat, kNN.E.cat, #F.E.cat,
-    #L.E.ctrl, 
-    #g.E.ctrl, kNN.E.ctrl, #F.E.ctrl, L.E.thnn, 
-    #g.E.thnn, kNN.E.thnn, 
-    #F.E.thnn, 
     
     fit.clust, sum.clust,
     g.E.t.ctrl.test, g.E.t.thnn.test,

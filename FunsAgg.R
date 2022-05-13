@@ -185,7 +185,7 @@ ppp.cat <- function(data) {
 
 # para obtener un rango de valores donde sale fuera el intervalo de confianza y calcular el GoF
 
-gof.int <- function(data, r.int, correct = TRUE) {
+gof.int <- function(data, r.int) {
   
   require(spatstat.core)
   
@@ -198,25 +198,22 @@ gof.int <- function(data, r.int, correct = TRUE) {
   
   if (is.infinite(data.interval[1]) | (data.interval[1]) == (data.interval[2])) {
     
+    # poner algún valor para que calcule algo, sino cribar antes los datos que se puede hacer el análisis
     data.interval <- c(min(data$r), max(data$r))
     
   }
 
   data.test <- dclf.test(data, rinterval = data.interval)
   
-  if (correct == TRUE) {
+  if (is.infinite(data.interval0[1]) | (data.interval0[1]) == (data.interval0[2])) {
     
-    if (data.interval0[1] == data.interval0[2]) {
+    data.test$statistic[1] <- 0
+    data.test$p.value <- 1
+    attributes(data.test)$rinterval[1] <- 0
+    attributes(data.test)$rinterval[2] <- 0
       
-      data.test$statistic[1] <- 0
-      data.test$p.value <- 1
-      attributes(data.test)$rinterval[1] <- data.interval0[1]
-      attributes(data.test)$rinterval[2] <- data.interval0[2]
-      
-    } 
+  } 
     
-  }
-  
   data.sum <- data.frame(r.min = attributes(data.test)$rinterval[1], r.max = attributes(data.test)$rinterval[2], e.out = sum(data.cat) / length(data.cat), 
                          data.test$statistic[1], p.value = data.test$p.value)
   
@@ -229,6 +226,6 @@ gof.int <- function(data, r.int, correct = TRUE) {
 
 signif.num <- function(x) {
   symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-         symbols = c("***", "**", "*", ".", "n.s"))
+         cutpoints = c(0, 0.001, 0.01, 0.05, 1), #0.1, para rehacerlo, ponerlo el segundo por la cola 
+         symbols = c("***", "**", "*", "n.s")) #".", 
 }
