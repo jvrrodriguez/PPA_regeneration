@@ -17,7 +17,7 @@ library(gridExtra)
 library(grid)
 library(cowplot)
 
-source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function quantumPlot.R")
+source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
 
 Year <- c(2008, 2009, 2010, 2011)
 Plot <- c(2,3,4,5,7,9)
@@ -123,12 +123,6 @@ for (i in 1:length(Year)) {
   
   
   if (i != length(Year)) {
-    
-    signif.num <- function(x) {
-      symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-             cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-             symbols = c("***", "**", "*", ".", "n.s"))
-    }
     
     sum.env.fate <- sum.env.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
     mod.env <- aov(pred.env ~ Treat: fate, data = data.pred[data.pred$Year == Year[i],])

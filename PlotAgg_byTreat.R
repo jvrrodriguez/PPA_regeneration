@@ -3,7 +3,7 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 
-source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function quantumPlot.R")
+source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
 
 Year <- c(2008, 2009, 2010, 2011)
 data <- c("g.E.rec", "Jdif.E.rec", "g.E.ac", "markcor.E.size.c.rec", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")

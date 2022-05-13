@@ -3,6 +3,8 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 
+source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
+
 Year <- 2007 + 1:4
 data <- c("g.E.rec", "Jdif.E.rec", "g.E.ac", "markcor.E.size.c.rec", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%")
@@ -11,12 +13,6 @@ Treat2 <-  c("20%", "Thinned", "Control", "Control", "Thinned", "20%", "Thinned"
 Plot.list <- list()
 meanData <- NULL
 save.output <- TRUE
-
-signif.num <- function(x) {
-  symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-         symbols = c("***", "**", "*", ".", "n.s"))
-}
 
 for (i in 1:length(data)) {
 
@@ -97,33 +93,6 @@ for (i in 1:length(data)) {
   
   # meanData <- rbind(meanData, data.frame(Var1 = data[,1], value=rowMeans(data[,c(8,9,12, 7,10,11)]), Year = Year[i]))
 
-  #https://stackoverflow.com/questions/13649473/add-a-common-legend-for-combined-ggplots
-  
-  grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), position = c("bottom", "right")) {
-    
-    plots <- list(...)
-    position <- match.arg(position)
-    g <- ggplotGrob(plots[[1]] + theme(legend.position = position))$grobs
-    legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
-    lheight <- sum(legend$height)
-    lwidth <- sum(legend$width)
-    gl <- lapply(plots, function(x) x + theme(legend.position = "none"))
-    gl <- c(gl, nrow = nrow, ncol = ncol)
-    
-    combined <- switch(position,
-                       "bottom" = arrangeGrob(do.call(arrangeGrob, gl),
-                                              legend,
-                                              ncol = 1,
-                                              heights = unit.c(unit(1, "npc") - lheight, lheight)),
-                       "right" = arrangeGrob(do.call(arrangeGrob, gl),
-                                             legend,
-                                             ncol = 2,
-                                             widths = unit.c(unit(1, "npc") - lwidth, lwidth)))
-    grid.newpage()
-    grid.draw(combined)
-    
-  }
-  
   grid_arrange_shared_legend(Plot.list[[3]], Plot.list[[4]], Plot.list[[9]], Plot.list[[2]], Plot.list[[5]], Plot.list[[7]], nrow = 2, ncol = 3, position = "right")
   
   if (save.output == T) dev.off()
