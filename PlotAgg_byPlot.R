@@ -6,7 +6,7 @@ library(grid)
 source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
 
 Year <- 2007 + 1:4
-data <- c("g.E.rec", "Jdif.E.rec", "g.E.ac", "markcor.E.size.c.rec", "Jdif.E.fate.rec", "K012.E.fate.rec.i", "g.E.env", "g.E.dens")
+data <- c("g.E.rec", "Jdif.E.rec", "g.E.ac", "markcor.E.size.c.rec", "Jdif.E.fate.rec", "Kmulti.E.fate.rec.i", "g.E.env", "g.E.dens")
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%")
 Treat2 <-  c("20%", "Thinned", "Control", "Control", "Thinned", "20%", "Thinned", "20%", "Control")
 
@@ -20,7 +20,7 @@ for (i in 1:length(data)) {
   data.gof <- NULL
   
   if (save.output == T) pdf(paste0("~/Documentos/Datos NO publicados/BioIntForest/PPA_Results/Figures/PPA_", data[i],"_Plot.pdf"), 
-                            width = 9, height = 8)  
+                            width = 9, height = ifelse(i != 5 & i != 6, 8, 6))  
   
   if (grepl("fate", data[i], fixed = TRUE)) {
     
@@ -63,10 +63,6 @@ for (i in 1:length(data)) {
     
   }
 
-  #longData<-melt(data[,c(8,9,12, 7,10,11)]) #primero controles (abajo) y luego thinning
-  #longData<-longData[longData$value!=0,]
-  #longData$Var1 <- data[,1]
-  
   plots <- unique(data.cat$Plot)
   
   for (j in plots) {
@@ -91,8 +87,6 @@ for (i in 1:length(data)) {
     
   } 
   
-  # meanData <- rbind(meanData, data.frame(Var1 = data[,1], value=rowMeans(data[,c(8,9,12, 7,10,11)]), Year = Year[i]))
-
   grid_arrange_shared_legend(Plot.list[[3]], Plot.list[[4]], Plot.list[[9]], Plot.list[[2]], Plot.list[[5]], Plot.list[[7]], nrow = 2, ncol = 3, position = "right")
   
   if (save.output == T) dev.off()

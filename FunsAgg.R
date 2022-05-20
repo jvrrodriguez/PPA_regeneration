@@ -67,28 +67,37 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
   require(ggthemes)
   
   # convert fv to dataframe
-  env.data <- as.data.frame(x)
-  env.data <- env.data[-1,]
+  data <- as.data.frame(x)
+  data <- data[-1,]
 
-  if (is.null(env.data$pooliso) == F) {
+  if (is.null(data$pooliso) == F) {
     
-    env.data$obs <- sqrt(env.data$pooliso/pi) - env.data$r
-    env.data$hi <- sqrt(env.data$poolhi/pi) - env.data$r
-    env.data$lo <- sqrt(env.data$poollo/pi) - env.data$r
+    data$obs <- sqrt(data$pooliso/pi) - data$r
+    data$hi <- sqrt(data$poolhi/pi) - data$r
+    data$lo <- sqrt(data$poollo/pi) - data$r
 
   }
+  
+  if (attributes(x)$fname[1] == "K") {
+    
+    data$obs <- sqrt(data$obs/pi) - data$r
+    data$hi <- sqrt(data$hi/pi) - data$r
+    data$lo <- sqrt(data$lo/pi) - data$r
+    
+  }
+  
   
   # plot it
   
   if (log.y == F) { 
     
-  gg_quantomPlot <- ggplot(env.data, aes(r, obs)) +
+  gg_quantomPlot <- ggplot(data, aes(r, obs)) +
     # plot observed value
     geom_line(colour = c("#4d4d4d")) +
     # plot simulation envelopes
     geom_ribbon(aes(ymin = lo,ymax = hi),alpha = 0.1, colour = c("#e0e0e0")) +
     # axes names and limits
-    #ylim(min(env.data$obs)-0.5, max(env.data$obs)+2) +
+    #ylim(min(data$obs)-0.5, max(data$obs)+2) +
     labs(x = "Distance r (m)", y = y_name) +
     # plot expected value, according to null model
     geom_hline(yintercept = y_intercept, linetype = "dashed", colour = c("#999999")) + 
@@ -100,14 +109,14 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
     
    if (log.y == T) { 
      
-     gg_quantomPlot <- ggplot(env.data, aes(r, obs)) +
+     gg_quantomPlot <- ggplot(data, aes(r, obs)) +
        # plot observed value
        geom_line(colour = c("#4d4d4d")) + scale_y_log10() +
-       #ylim(min(env.data$obs, na.rm=T) - 0.5, max(env.data$hi, na.rm=T) - max(env.data$hi, na.rm=T) * 0.1) +
+       #ylim(min(data$obs, na.rm=T) - 0.5, max(data$hi, na.rm=T) - max(data$hi, na.rm=T) * 0.1) +
        # plot simulation envelopes
        geom_ribbon(aes(ymin = lo,ymax = hi), alpha = 0.1, colour = c("#e0e0e0")) +
        # axes names and limits
-       #ylim(min(env.data$obs)-0.5, max(env.data$obs)+2) +
+       #ylim(min(data$obs)-0.5, max(data$obs)+2) +
        labs(x = "Distance r (m)", y = y_name) +
        # plot expected value, according to null model
        geom_hline(yintercept = y_intercept, linetype = "dashed", colour = c("#999999")) +
@@ -121,9 +130,9 @@ quantumPlot <- function(x, quantum = T, log.y = T, y_intercept = 1, y_name = "su
      
      # plot 'Quantums'
       gg_quantomPlot + 
-       geom_rug(data = env.data[env.data$obs > env.data$hi,], sides = "b", colour = colour[1]) +
-       geom_rug(data = env.data[env.data$obs < env.data$lo,], sides = "b", colour = colour[2]) +
-       geom_rug(data = env.data[env.data$obs >= env.data$lo & env.data$obs <= env.data$hi,], sides = "b", color = colour[3])
+       geom_rug(data = data[data$obs > data$hi,], sides = "b", colour = colour[1]) +
+       geom_rug(data = data[data$obs < data$lo,], sides = "b", colour = colour[2]) +
+       geom_rug(data = data[data$obs >= data$lo & data$obs <= data$hi,], sides = "b", color = colour[3])
      
    }
     
@@ -145,10 +154,12 @@ grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), 
   gl <- c(gl, nrow = nrow, ncol = ncol)
   
   combined <- switch(position,
+                     
                      "bottom" = arrangeGrob(do.call(arrangeGrob, gl),
                                             legend,
                                             ncol = 1,
                                             heights = unit.c(unit(1, "npc") - lheight, lheight)),
+                     
                      "right" = arrangeGrob(do.call(arrangeGrob, gl),
                                            legend,
                                            ncol = 2,
@@ -194,29 +205,24 @@ gof.int <- function(data, r.int) {
   cons.values <- rollsum(data.cat, r.int, fill = NA, align = "center") == r.int
   data.interval <- c(min(data$r[cons.values], na.rm = T), max(data$r[cons.values], na.rm = T))
   
-  data.interval0 <- data.interval
-  
   if (is.infinite(data.interval[1]) | (data.interval[1]) == (data.interval[2])) {
     
-    # poner algún valor para que calcule algo, sino cribar antes los datos que se puede hacer el análisis
-    data.interval <- c(min(data$r), max(data$r))
+    #si es infinito, o son iguales los dos valores, se le asigna valores de cero a todo
+    
+    data.sum <- data.frame(r.min = 0, r.max = 0, 
+                           e.out = sum(data.cat) / length(data.cat), 
+                           u = 0, p.value = 1)
+    
+  } else {
+    
+    data.test <- dclf.test(data, rinterval = data.interval)
+    
+    data.sum <- data.frame(r.min = attributes(data.test)$rinterval[1], r.max = attributes(data.test)$rinterval[2], 
+                           e.out = sum(data.cat) / length(data.cat), 
+                           u = data.test$statistic[1], p.value = data.test$p.value)
     
   }
 
-  data.test <- dclf.test(data, rinterval = data.interval)
-  
-  if (is.infinite(data.interval0[1]) | (data.interval0[1]) == (data.interval0[2])) {
-    
-    data.test$statistic[1] <- 0
-    data.test$p.value <- 1
-    attributes(data.test)$rinterval[1] <- 0
-    attributes(data.test)$rinterval[2] <- 0
-      
-  } 
-    
-  data.sum <- data.frame(r.min = attributes(data.test)$rinterval[1], r.max = attributes(data.test)$rinterval[2], e.out = sum(data.cat) / length(data.cat), 
-                         data.test$statistic[1], p.value = data.test$p.value)
-  
   return(data.sum)
   
 }

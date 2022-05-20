@@ -19,35 +19,24 @@ library(cowplot)
 
 source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/FunsAgg.R")
 
-Year <- c(2008, 2009, 2010, 2011)
+Year <- 2007 + 1:4
 Plot <- c(2,3,4,5,7,9)
 save.output <- TRUE
+Var.env <- c("(Intercept)", "Treat30%", "Canopy", "LAI", "DiffBelow", "Fs", "Hed", "Rub", "Pter", "Scl")
 Var.dens <- c("(Intercept)", "Treat30%",  "Dens.adult", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
-Var.env <- c("(Intercept)", "Treat30%", "Canopy", "CanOpen", "LAI", "DiffBelow", "N.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Pter", "Rub", "Scl") #"MDT",  "MDS",  "Lad.var", "Lad.cv", "Lad.shan",
 
-save.output <- TRUE
-
-#Encontrar una interaccion entre especies y ver si esto varia con el tiempo (variables ambientales
-#alfun factor que tenga una tendencia temporal
-
-estimate.env <- NULL
-estimate.dens <- NULL
-p.env <- NULL
-p.dens <- NULL
+estimate.env <- NULL; estimate.dens <- NULL
+p.env <- NULL; p.dens <- NULL
+list.env.sp <- list(); list.dens.sp <- list()
+list.env.fate <- list(); list.dens.fate <- list()
+estimate.env.plot <- NULL; estimate.dens.plot <- NULL
+p.env.plot <- NULL; p.dens.plot <- NULL
+tukey.env.all <- NULL; tukey.dens.all <- NULL
 
 data.pred <- data.frame()
 
-list.env.sp <- list()
-list.dens.sp <- list()
+save.output <- TRUE
 
-list.env.fate <- list()
-list.dens.fate <- list()
-
-estimate.env.plot <- NULL
-estimate.dens.plot <- NULL
-
-p.env.plot <- NULL
-p.dens.plot <- NULL
 
 for (i in 1:length(Year)) {
   
@@ -124,77 +113,104 @@ for (i in 1:length(Year)) {
   
   if (i != length(Year)) {
     
-    sum.env.fate <- sum.env.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
-    mod.env <- aov(pred.env ~ Treat: fate, data = data.pred[data.pred$Year == Year[i],])
+    tukey.env <- NULL
+    mod.env <- aov(pred.env ~ Treat : fate, data = data.pred[data.pred$Year == Year[i],])
     tukey.env <- data.frame(TukeyHSD(mod.env)$`Treat:fate`, label = array(signif.num(TukeyHSD(mod.env)$`Treat:fate`[,4])))
     tukey.env <- tukey.env[c(2,5),]
     max.env <- max(sum.env.fate$mean + sum.env.fate$sd)
     
-    list.env.fate[[i]] <- ggplot(sum.env.fate, aes(x = sum.env.fate$fate, y = mean, fill = sum.env.fate$fate)) + 
+    a.env_ctrl <- aov(pred.env ~ fate, data = data.pred[data.pred$Year == Year[i] & data.pred$Treat == "0%",])
+    tHSD_ctrl <- TukeyHSD(a.env_ctrl, ordered = FALSE, conf.level = 0.95)
+    
+    a.env_thnn <- aov(pred.env ~ fate, data = data.pred[data.pred$Year == Year[i] & data.pred$Treat == "30%",])
+    tHSD_thnn <- TukeyHSD(a.env_thnn, ordered = FALSE, conf.level = 0.95)
+    
+    tukey.env <- data.frame(rbind(tHSD_ctrl$fate, tHSD_thnn$fate))
+    tukey.env$label <- signif.num(tukey.env$p.adj)
+    
+    list.env.fate[[i]] <- ggplot(sum.env.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" )), 
+      aes(x = sum.env.fate$fate, y = mean, fill = sum.env.fate$fate)) + 
       geom_bar(stat = "identity", color = "black", position = position_dodge()) +
       facet_grid(.~Treat) + 
       labs(x = "", y = expression(paste("Pred. intensity ", lambda))) + 
       scale_y_continuous(limits = c(0,max.env)) + 
       geom_errorbar( aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.env - 0.01, xmin = c(1,1), xmax = c(2,2)) +
-      geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.env, 4), aes(label = c(tukey.env$label[1], "",tukey.env$label[2], "")), data = tukey.env) + 
+      #geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.env, 4), aes(label = c(tukey.env$label[1], "", tukey.env$label[2], "")), data = tukey.env) + 
+      geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.env, 4), aes(label = c(tukey.env$label[1], "", tukey.env$label[2], "")), data = tukey.env ) + 
       ggtitle(paste0("Environmental factors // ", Year[i])) +
       theme(plot.title = element_text(size = 10), axis.text.x = element_blank())
       #title("Best environmental model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
-    sum.dens.fate <- sum.dens.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" ))
-    mod.dens <- aov(pred.dens ~ Treat: fate, data = data.pred[data.pred$Year == Year[i],])
+    tukey.dens <- NULL
+    mod.dens <- aov(pred.dens ~ Treat : fate, data = data.pred[data.pred$Year == Year[i],])
     tukey.dens <- data.frame(TukeyHSD(mod.dens)$`Treat:fate`, label = array(signif.num(TukeyHSD(mod.dens)$`Treat:fate`[,4])))
     tukey.dens <- tukey.dens[c(2,5),]
     max.dens <- max(sum.dens.fate$mean + sum.dens.fate$sd/4)
     
-    list.dens.fate[[i]] <- ggplot(sum.dens.fate, aes(x = sum.dens.fate$fate, y = mean, fill = sum.dens.fate$fate)) + 
+    a.dens_ctrl <- aov(pred.dens ~ fate, data = data.pred[data.pred$Year == Year[i] & data.pred$Treat == "0%",])
+    tHSD_ctrl <- TukeyHSD(a.dens_ctrl, ordered = FALSE, conf.level = 0.95)
+    
+    a.dens_thnn <- aov(pred.dens ~ fate, data = data.pred[data.pred$Year == Year[i] & data.pred$Treat == "30%",])
+    tHSD_thnn <- TukeyHSD(a.dens_thnn, ordered = FALSE, conf.level = 0.95)
+    
+    tukey.dens <- data.frame(rbind(tHSD_ctrl$fate, tHSD_thnn$fate))
+    tukey.dens$label <- signif.num(tukey.dens$p.adj)
+    
+    list.dens.fate[[i]] <- ggplot(sum.dens.fate %>% mutate(Treat = ifelse( Treat == "30%", "Thnn", "Ctrl" )), 
+      aes(x = sum.dens.fate$fate, y = mean, fill = sum.dens.fate$fate)) + 
       geom_bar(stat = "identity", color = "black", position = position_dodge()) +
       facet_wrap(.~Treat) + 
       labs(x = "", y = expression(paste("Pred. intensity ", lambda))) + 
       scale_y_continuous(limits = c(0, max.dens)) + 
       geom_errorbar( aes(ymin = mean - se, ymax = mean + se), width = .2, position = position_dodge(.9)) +
       geom_signif(annotations = c("",""), y_position = max.dens - 0.03, xmin = c(1,1), xmax = c(2,2)) +
-      geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.dens, 4), aes(label = c(tukey.dens$label[1], "",tukey.dens$label[2], "")), data = tukey.dens) + 
+      #geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.dens, 4), aes(label = c(tukey.dens$label[1], "", tukey.dens$label[2], "")), data = tukey.dens) + 
+      geom_text(x = c(1.5, 2.5, 1.5, 2.5), y = rep(max.dens, 4), aes(label = c(tukey.dens$label[1], "", tukey.dens$label[2], "")), data = tukey.dens ) + 
       ggtitle(paste0("Density-dependent factors // ", Year[i])) +
       theme(plot.title = element_text(size = 10), axis.text.x = element_blank())
       #title("Best Aggregation model for each plot", line = -1, cex.main = 1, outer = TRUE)
     
   }
   
+  tukey.env.all <- rbind(tukey.env.all, data.frame(Year = Year[i], Treat = c("Ctrl","Thnn"), tukey.env))
+  tukey.dens.all <- rbind(tukey.dens.all, data.frame(Year = Year[i], Treat = c("Ctrl","Thnn"), tukey.dens))
+  
 }
 
 
-estimate.env.plot <- estimate.env.plot[order(estimate.env.plot$Plot),]
-estimate.dens.plot <- estimate.dens.plot[order(estimate.dens.plot$Plot),]
+tukey.env.all; tukey.dens.all
 
-p.env.plot <- p.env.plot[order(p.env.plot$Plot),]
-p.dens.plot <- p.dens.plot[order(p.dens.plot$Plot),]
+#estimate.env.plot <- estimate.env.plot[order(estimate.env.plot$Plot),]
+#estimate.dens.plot <- estimate.dens.plot[order(estimate.dens.plot$Plot),]
+
+#p.env.plot <- p.env.plot[order(p.env.plot$Plot),]
+#p.dens.plot <- p.dens.plot[order(p.dens.plot$Plot),]
 
 p.env.plot <-  ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 1, levels(var.env.Plot[[j]]$Ztest)[[1]],
        ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 2, levels(var.env.Plot[[j]]$Ztest)[[2]],
              ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 3, levels(var.env.Plot[[j]]$Ztest)[[3]], 
-                    ifelse(is.na(p.env.plot[,3:dim(p.env.plot)[2]]), "", " "))))
+                    ifelse(p.env.plot[,3:dim(p.env.plot)[2]] == 4, "n.s.", ""))))
 
 p.dens.plot <-  ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 1, levels(var.dens.Plot[[j]]$Ztest)[[1]],
                       ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 2, levels(var.dens.Plot[[j]]$Ztest)[[2]],
                              ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 3, levels(var.dens.Plot[[j]]$Ztest)[[3]], 
-                                    ifelse(is.na(p.dens.plot[,3:dim(p.dens.plot)[2]]), "", " "))))
+                                    ifelse(p.dens.plot[,3:dim(p.dens.plot)[2]] == 4, "n.s.", ""))))
 
-colnames(estimate.env.plot)[3:dim(p.env.plot)[2]] <- Var.env
-colnames(estimate.dens.plot)[3:dim(p.dens.plot)[2]] <- Var.dens
+#colnames(estimate.env.plot)[3:dim(p.env.plot)[2]] <- Var.env
+#colnames(estimate.dens.plot)[3:dim(p.dens.plot)[2]] <- Var.dens
 
 estimate.env.plot <- format(estimate.env.plot, trim = TRUE, digits = 3, scientific = 5)
 estimate.dens.plot <- format(estimate.dens.plot, trim = TRUE, digits = 3, scientific = 5)
 
-estimate.env.plot2 <- matrix(paste(as.matrix(estimate.env.plot[,3:dim(p.env.plot)[2]]), as.matrix(p.env.plot)), ncol = 13) #modificar el tamaño en funcon de las variables
-estimate.dens.plot2 <- matrix(paste(as.matrix(estimate.dens.plot[,3:dim(p.dens.plot)[2]]), as.matrix(p.dens.plot)), ncol = 6)
+estimate.env.plot2 <- matrix(paste(as.matrix(estimate.env.plot[,-(1:2)]), as.matrix(p.env.plot)), ncol = length(Var.env)) #modificar el tamaño en funcon de las variables
+estimate.dens.plot2 <- matrix(paste(as.matrix(estimate.dens.plot[,-(1:2)]), as.matrix(p.dens.plot)), ncol = length(Var.dens))
 
 colnames(estimate.env.plot2) <- Var.env
 colnames(estimate.dens.plot2) <- Var.dens
 
-estimate.env.plot2[estimate.env.plot2 == "NA NA"] <- ""
-estimate.dens.plot2[estimate.dens.plot2 == "NA NA"] <- ""
+estimate.env.plot2[estimate.env.plot2 == "NA NA"] <- "-"
+estimate.dens.plot2[estimate.dens.plot2 == "NA NA"] <- "-"
 
 estimate.env.plot2 <- cbind(estimate.env.plot[,2:1], estimate.env.plot2)
 estimate.dens.plot2 <- cbind(estimate.dens.plot[,2:1], estimate.dens.plot2)
@@ -281,6 +297,10 @@ plot(prow)
 if (save.output == T) dev.off()
 
 data.pred$pred.dens <- ifelse(data.pred$pred.dens > 1, 1, data.pred$pred.dens)
+
+
+
+
 
 
 

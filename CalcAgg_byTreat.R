@@ -130,8 +130,6 @@ for (j in 1:length(Year)) {
     
     source("~/Documentos/Datos NO publicados/BioIntForest/PPA_regeneration/function raster.as.im.R")
     
-    #load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/MDS-MDT_A", i, ".RData"))
-
     load(paste0("~/Documentos/Datos NO publicados/BioIntForest/Data/Environ_Maps/Light_A", i, ".RData"))
     im.Light <- normalize_stack(im.Light)
     im.Light$N.Sunflecks$v <- ifelse(is.nan(im.Light$N.Sunflecks$v), 1,  im.Light$N.Sunflecks$v)
@@ -401,8 +399,7 @@ for (j in 1:length(Year)) {
     
     # Setup covariates
     
-    data.sp$covs[[i]] <- listof(#MDT = im.MDTS[[1]], MDS = im.MDTS[[2]],
-                                CanOpen = im.Light[[1]], LAI = im.Light[[2]], DirectBelow = im.Light[[3]], DiffBelow = im.Light[[4]], DirectBelow.Yr = im.Light[[5]], DiffBelow.Yr = im.Light[[6]], N.Sunflecks = im.Light[[7]], Mdn.Sunflecks = im.Light[[8]], Max.Sunflecks = im.Light[[9]],
+    data.sp$covs[[i]] <- listof(CanOpen = im.Light[[1]], LAI = im.Light[[2]], DirectBelow = im.Light[[3]], DiffBelow = im.Light[[4]], DirectBelow.Yr = im.Light[[5]], DiffBelow.Yr = im.Light[[6]], N.Sunflecks = im.Light[[7]], Mdn.Sunflecks = im.Light[[8]], Max.Sunflecks = im.Light[[9]],
                                 Canopy = im.Canopy[[1]], 
                                 Fs = im.Understory[[1]], Hed = im.Understory[[2]], Pter = im.Understory[[3]], Rub = im.Understory[[4]], Scl = im.Understory[[5]],
                                 Dens = dens.all$im[[i]], Dens.adult = dens.size$im[[i]]["Adult"][[1]], Dens.rec = dens.size$im[[i]]["Recruit"][[1]], Dens.size = dens.size.c$im[[i]], Dens.size.rec = dens.size.c.rec$im[[i]],
@@ -475,7 +472,6 @@ for (j in 1:length(Year)) {
  
   
   # Generate summary plots for supplementary material
-  
   prow <- plot_grid(map.Plots$p_3[[1]] + theme(legend.position = "none"), map.Plots$p_4[[1]] + theme(legend.position = "none"), map.Plots$p_9[[1]] + theme(legend.position = "none"), 
                     map.Plots$p_2[[1]] + theme(legend.position = "none"), map.Plots$p_5[[1]] + theme(legend.position = "none"), map.Plots$p_7[[1]] + theme(legend.position = "none"),
                     align = 'vh',
@@ -493,8 +489,8 @@ for (j in 1:length(Year)) {
   print(
     plot_grid(prow, legend, rel_widths = c(3, .4)))
   
-  var.env <- c("Canopy", "CanOpen", "LAI", "DiffBelow", "N.Sunflecks", "Max.Sunflecks", "Fs", "Hed", "Rub", "Pter", "Scl")
-  var.dens <- c("Dens.adult", "Dens.rec", "Dens.rich.rec", "Dens.shan.rec")
+  var.env <- c("Canopy", "LAI", "DiffBelow", "Fs", "Hed", "Rub", "Pter", "Scl")
+  var.dens <- c("Dens.adult", "Dens.size.rec", "Dens.rich.rec", "Dens.shan.rec")
   var.all <- c(var.env, var.dens)
   
   for (i in 1:length(var.all)) {
@@ -549,7 +545,6 @@ for (j in 1:length(Year)) {
   
   
   par(mfrow = c(2,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
-  #plot(L.E.rec.ctrl, . -r ~ r, shade=c("hi", "lo"), legend = F, main = NULL)
   plot(g.E.rec.ctrl, main = NULL, legend = F)
   plot(kNN.E.rec.ctrl, main = NULL, legend = F)
   plot(g.E.rec.thnn, main = NULL, legend = F)
@@ -853,11 +848,12 @@ for (j in 1:length(Year)) {
   cat("Test differences in fate \n")
   
   Jdif.E.fate.rec <- list(); K012.E.fate.rec.i <- Jdif.E.fate.rec
-  markcor.E.size.c.fate.rec <- list(); null_model_Kmulti <- list()
-  Jdif.E.fate.rec.cat <- NULL; K012.E.fate.rec.i.cat <- NULL
+  markcor.E.size.c.fate.rec <- list(); Kmulti.E.fate.rec.i <- list()
+  Jdif.E.fate.rec.cat <- NULL; K012.E.fate.rec.i.cat <- NULL; Kmulti.E.fate.rec.i.cat <- NULL
   Jdif.E.fate.rec.ctrl <- NULL; Jdif.E.fate.rec.thnn <- NULL
   K012.E.fate.rec.i.ctrl <- NULL; K012.E.fate.rec.i.thnn <- NULL
-  Jdif.E.fate.rec.gof <- NULL; K012.E.fate.rec.i.gof <- NULL
+  Kmulti.E.fate.rec.i.ctrl <- NULL; Kmulti.E.fate.rec.i.thnn <- NULL
+  Jdif.E.fate.rec.gof <- NULL; K012.E.fate.rec.i.gof <- NULL; Kmulti.E.fate.rec.i.gof <- NULL
   markcor.E.size.c.alive.rec.cat <- NULL; markcor.E.size.c.dead.rec.cat <- NULL
   
   if (Year[j] < 2011) {
@@ -873,58 +869,26 @@ for (j in 1:length(Year)) {
                               data.frame(Plot = i, Jdif.E.fate.rec.test) )
       
       K012.E.fate.rec.i[[i]] <- K012(data.fate.rec.i$ppp[[i]], fijo = "Tree", i = "RcSurv", j = "RcDead", r = seq(0, 8, le = length(markcor.E.size.c.ad.ctrl$r)), nsim = nsim, nrank = 5, correction = "Ripley")
-      #Kmulti.ls(data.fate.rec.i$ppp[[i]], I = "Tree", J = "RcSurv", r = seq(0, 8, le = 51), corre = "Ripley")
       K012.E.fate.rec.i.cat <- cbind(K012.E.fate.rec.i[[i]]$k01$r, K012.E.fate.rec.i.cat, ppp.cat(K012.E.fate.rec.i[[i]]$k01))
       
-      #repito el codigo de la funcion "gof.int" porque la forma de calcularlo es algo diferente
-      cons.values <- rollsum(abs(ppp.cat(K012.E.fate.rec.i[[i]]$k01)), gof.win, fill = NA, align = "center") == gof.win
-      K012.E.fate.rec.i.interval <- c(min(K012.E.fate.rec.i[[i]]$k01$r[cons.values], na.rm = T), max(K012.E.fate.rec.i[[i]]$k01$r[cons.values], na.rm = T))
-      
-      K012.E.fate.rec.i.interval0 <- K012.E.fate.rec.i.interval
-      
-      if (is.infinite(K012.E.fate.rec.i.interval[1]) | (K012.E.fate.rec.i.interval[1]) == (K012.E.fate.rec.i.interval[2])) {
-        
-        K012.E.fate.rec.i.interval <- c(min(K012.E.fate.rec.i[[i]]$k01$r), max(K012.E.fate.rec.i[[i]]$k01$r))
-        
-      }
-
       # lo he hecho de manera mas o menos apañada, metiendo la función base que usa K012; no sé si estará bien hecho, pero es lo mejor que puedo hacer
       marx <- marks(data.fate.rec.i$ppp[[i]])
       fijo <- (marx == "Tree")
       I = (marx == "RcSurv")
       J <- (marx == "RcDead")
 
-      kk <- Kmulti.ls(data.fate.rec.i$ppp[[i]], fijo, I, corre = "isotropic")
-      plot(kk)
-      
+      #Kmulti.ls(data.fate.rec.i$ppp[[i]], I = "Tree", J = "RcSurv", r = seq(0, 8, le = 51), corre = "Ripley")
+      #kk <- Kmulti.ls(data.fate.rec.i$ppp[[i]], fijo, I, corre = "isotropic")
+      #plot(kk. -r ~ r, shade = c("hi", "lo"), legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
       #k <- envelope(data.fate.rec.i$ppp[[i]], fun = K012, nsim = nsim, i = "RcSurv", j = "RcDead", fijo = "Tree", nrank = 5)
       
-      null_model_Kmulti[[i]] <- envelope(data.fate.rec.i$ppp[[i]], fun = Kmulti, nsim = nsim, I = fijo, J = I, nrank = 5, corre = "isotropic", savefuns = TRUE, savepatterns = TRUE)
+      Kmulti.E.fate.rec.i[[i]] <- envelope(data.fate.rec.i$ppp[[i]], fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5, corre = "isotropic", savefuns = TRUE, savepatterns = TRUE)
+      Kmulti.E.fate.rec.i.cat <- cbind(Kmulti.E.fate.rec.i[[i]]$r, Kmulti.E.fate.rec.i.cat, ppp.cat(Kmulti.E.fate.rec.i[[i]]))
       
-      cons.values <- rollsum(abs(ppp.cat(null_model_Kmulti[[i]])), gof.win, fill = NA, align = "center") == gof.win
-      null_model_Kmulti.interval <- c(min(null_model_Kmulti[[i]]$r[cons.values], na.rm = T), max(null_model_Kmulti[[i]]$r[cons.values], na.rm = T))
+      Kmulti.E.fate.rec.i.test <- gof.int(Kmulti.E.fate.rec.i[[i]], gof.win)
       
-      null_model_Kmulti.interval0 <- null_model_Kmulti.interval
-      
-      if (is.infinite(null_model_Kmulti.interval[1]) | (null_model_Kmulti.interval[1]) == (null_model_Kmulti.interval[2])) {
-        
-        null_model_Kmulti.interval <- c(min(null_model_Kmulti[[i]]$r), max(null_model_Kmulti[[i]]$r))
-        
-      }
-
-      null_model_Kmulti.test <- dclf.test(null_model_Kmulti[[i]], rinterval = null_model_Kmulti.interval, fun = Kmulti, nsim = nsim, I = fijo, J = I, nrank = 5, corre = "isotropic")
-      
-      if (null_model_Kmulti.interval0[1] == null_model_Kmulti.interval0[2]) {
-        
-        null_model_Kmulti.test$statistic[1] <- 0
-        null_model_Kmulti.test$p.value <- 1
-        attributes(null_model_Kmulti.test)$rinterval[1] <- null_model_Kmulti.interval0[1]
-        attributes(null_model_Kmulti.test)$rinterval[2] <- null_model_Kmulti.interval0[2]
-        
-      } 
-      
-      K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof, 
-                          data.frame(Plot = i, r.min = attributes(null_model_Kmulti.test)$rinterval[1], r.max = attributes(null_model_Kmulti.test)$rinterval[2], null_model_Kmulti.test$statistic[1], p.value = null_model_Kmulti.test$p.value))
+      Kmulti.E.fate.rec.i.gof <- rbind(Kmulti.E.fate.rec.i.gof, 
+                                       data.frame(Plot = i, Kmulti.E.fate.rec.i.test))
       
       mark.corr.c.fate <- data.size.c.rec$ppp[[i]] 
       mark.corr.c.fate$marks <- data.frame(SIZE = data.size.c.rec$ppp[[i]]$marks, FATE = data.fate.rec$ppp[[i]]$marks) 
@@ -932,6 +896,7 @@ for (j in 1:length(Year)) {
       
       markcor.E.size.c.alive.rec.cat <- cbind(markcor.E.size.c.alive.rec.cat, markcor.E.size.c.fate.rec[[i]]$fns[[3]]$iso)
       markcor.E.size.c.dead.rec.cat <- cbind(markcor.E.size.c.dead.rec.cat, markcor.E.size.c.dead.rec.cat[[i]]$fns[[2]]$iso)
+     
       #remotes::install_github("petrkeil/spasm")
       #PCFr(mark.corr.c.fate, 1, 0, 100, 10)
       #envelope(mark.corr.c.fate, markcrosscorr, nsim = nsim)
@@ -942,8 +907,8 @@ for (j in 1:length(Year)) {
     Jdif.E.fate.rec.ctrl <- pool(Jdif.E.fate.rec[[3]], Jdif.E.fate.rec[[4]], Jdif.E.fate.rec[[9]], savefuns = TRUE)
     Jdif.E.fate.rec.thnn <- pool(Jdif.E.fate.rec[[2]], Jdif.E.fate.rec[[5]], Jdif.E.fate.rec[[7]], savefuns = TRUE)
     
-    Jdif.E.fate.rec.ctrl.test <- gof.int(markcor.E.size.c.rec.ctrl, gof.win)
-    Jdif.E.fate.rec.thnn.test <- gof.int(markcor.E.size.c.rec.thnn, gof.win)
+    Jdif.E.fate.rec.ctrl.test <- gof.int(Jdif.E.fate.rec.ctrl, gof.win)
+    Jdif.E.fate.rec.thnn.test <- gof.int(Jdif.E.fate.rec.thnn, gof.win)
     
     Jdif.E.fate.rec.gof <- rbind(Jdif.E.fate.rec.gof, 
                             data.frame(Plot = "Ctrl", Jdif.E.fate.rec.ctrl.test),
@@ -952,17 +917,17 @@ for (j in 1:length(Year)) {
     K012.E.fate.rec.i.ctrl <- pool(K012.E.fate.rec.i[[3]]$k01, K012.E.fate.rec.i[[4]]$k01, K012.E.fate.rec.i[[9]]$k01)
     K012.E.fate.rec.i.thnn <- pool(K012.E.fate.rec.i[[2]]$k01, K012.E.fate.rec.i[[5]]$k01, K012.E.fate.rec.i[[7]]$k01)
     
-    null_model_Kmulti.ctrl <- pool(null_model_Kmulti[[3]], null_model_Kmulti[[4]], null_model_Kmulti[[9]], savefuns = TRUE)
-    null_model_Kmulti.thnn <- pool(null_model_Kmulti[[2]], null_model_Kmulti[[5]], null_model_Kmulti[[7]], savefuns = TRUE)
+    Kmulti.E.fate.rec.i.ctrl <- pool(Kmulti.E.fate.rec.i[[3]], Kmulti.E.fate.rec.i[[4]], Kmulti.E.fate.rec.i[[9]], savefuns = TRUE)
+    Kmulti.E.fate.rec.i.thnn <- pool(Kmulti.E.fate.rec.i[[2]], Kmulti.E.fate.rec.i[[5]], Kmulti.E.fate.rec.i[[7]], savefuns = TRUE)
     
-    null_model_Kmulti.ctrl.test <- gof.int(null_model_Kmulti.ctrl, gof.win)
-    null_model_Kmulti.thnn.test <- gof.int(null_model_Kmulti.thnn, gof.win)
+    Kmulti.E.fate.rec.i.ctrl.test <- gof.int(Kmulti.E.fate.rec.i.ctrl, gof.win)
+    Kmulti.E.fate.rec.i.thnn.test <- gof.int(Kmulti.E.fate.rec.i.thnn, gof.win)
 
     # K012.E.fate.rec.i.ac.test <- dclf.test(K012.E.fate.rec.i.ctrl, rinterval = K012.E.fate.rec.i.ac.interval, fun = Kmulti.ls, nsim = nsim, I = fijo, J = I, nrank = 5)
     
-    K012.E.fate.rec.i.gof <- rbind(K012.E.fate.rec.i.gof,
-                          data.frame(Plot = "Ctrl", null_model_Kmulti.ctrl.test),
-                          data.frame(Plot = "Thnn", null_model_Kmulti.thnn.test))
+    Kmulti.E.fate.rec.i.gof <- rbind(Kmulti.E.fate.rec.i.gof,
+                          data.frame(Plot = "Ctrl", Kmulti.E.fate.rec.i.ctrl.test),
+                          data.frame(Plot = "Thnn", Kmulti.E.fate.rec.i.thnn.test))
     
     markcor.E.size.c.alive.rec.ctrl <- pool(markcor.E.size.c.fate.rec[[3]]$fns[[3]], markcor.E.size.c.fate.rec[[4]]$fns[[3]], markcor.E.size.c.fate.rec[[9]]$fns[[3]])
     markcor.E.size.c.alive.rec.thnn <- pool(markcor.E.size.c.fate.rec[[2]]$fns[[3]], markcor.E.size.c.fate.rec[[5]]$fns[[3]], markcor.E.size.c.fate.rec[[7]]$fns[[3]])
@@ -975,12 +940,17 @@ for (j in 1:length(Year)) {
     plot(Jdif.E.fate.rec.thnn, main = NULL, legend = F)
     
     col.trans <- hsv(1, 1, 1, 0)
+    
     plot(K012.E.fate.rec.i.ctrl, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F, 
          col = c(col.trans, col.trans, col.trans, col.trans, col.trans, col.trans, "grey","black","grey"),
          lty = c(0, 0, 0, 0, 0, 0, 3, 1, 3))
     plot(K012.E.fate.rec.i.thnn, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F, 
          col = c(col.trans, col.trans, col.trans, col.trans, col.trans, col.trans, "grey","black","grey"),
          lty = c(0, 0, 0, 0, 0 , 0, 3, 1, 3))
+    
+    plot(Kmulti.E.fate.rec.i.ctrl, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F)
+    plot(Kmulti.E.fate.rec.i.thnn, sqrt(./pi)-r~r, ylab = expression(L[12]), main = NULL, legend = F)
+    
     title(paste0("Year ", Year[j], " // Distance-dependent of surviving recruits"), line = -1, cex.main = 1, outer = TRUE)
     par(old.par)
     
@@ -993,6 +963,13 @@ for (j in 1:length(Year)) {
                  and dead (below) recruits"), line = -1, cex.main = 1, outer = TRUE)
     
   }
+  
+  
+  
+  # Differfences in growth...
+  
+  cat("Test differences in growth \n")
+  
   
   markcor.E.growth.ad <- list(); Jdif.E.fate.ad <- markcor.E.growth.ad
   markcor.E.growth.ad.cat <- NULL
@@ -1068,12 +1045,13 @@ for (j in 1:length(Year)) {
     
     # if (!is.null(data.sp$covs[[i]]$Fs)) {
     
-    if (fit.gam == F & i != 9) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data = data.sp$covs[[i]])
-    if (fit.gam == F & i == 9) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + CanOpen + LAI + DiffBelow + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data = data.sp$covs[[i]]) # la variable N.Sunflecks en la parcela 9 es homogenea asi que estimaria NA y daría error mas abajo
-    if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
+    if (fit.gam == F & i != 9) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + LAI + DiffBelow + Fs + Hed + Rub + Pter + Scl, data = data.sp$covs[[i]])
+    if (fit.gam == F & i == 3) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + LAI + DiffBelow + Fs + Pter + Scl, data = data.sp$covs[[i]])
+    if (fit.gam == F & i == 9) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Canopy + LAI + DiffBelow + Fs + Hed + Rub + Pter + Scl, data = data.sp$covs[[i]]) # la variable N.Sunflecks en la parcela 9 es homogenea asi que estimaria NA y daría error mas abajo
+    if (fit.gam == T) fit.env.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(Fs,3) + bs(Hed,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
-    fit.env[[i]] <- step(fit.env.full, trace = 0) 
-    title.env[[i]] <- as.character(fit.env[[i]]$trend[[2]])[[2]]
+    fit.env[[i]] <- step(fit.env.full, , direction = "backward", trace = 0) 
+    title.env[[i]] <- paste(as.character(fit.env[[i]]$trend), collapse = "")
     
     #Para grabar, simplificar objeto (una tabla), ya que ocupa muchisimo espacio (gigas)
     var.env.Plot[[i]] <- summary(fit.env[[i]])$coefs.SE.CI
@@ -1124,10 +1102,12 @@ for (j in 1:length(Year)) {
     
   }
   
+  
   #Plot predicted for each plot
   raster.tmp <- stack(
     raster(data.sp.rec$pred.env$`3`$Qh), raster(data.sp.rec$pred.env$`4`$Qh), raster(data.sp.rec$pred.env$`9`$Qh),
     raster(data.sp.rec$pred.env$`2`[[2]]$Qh), raster(data.sp.rec$pred.env$`5`$Qh), raster(data.sp.rec$pred.env$`7`$Qh))
+  #raster(data.sp.rec$pred.env$`2`[[2]]$Qh)
     
   names(raster.tmp) <- c(paste0("Plot_", c(3,4,9,2,5,7)))
   print( 
@@ -1140,9 +1120,9 @@ for (j in 1:length(Year)) {
   
   
   #plot(data.sp.rec$pred.env[Plots], main = "Predicted Environment") # si se quita del modelo especie
-  data.sp.rec.Fs <- cbind.hyperframe(data.sp.rec.Fs, data.sp.rec[,7:24])
-  data.sp.rec.Qh <- cbind.hyperframe(data.sp.rec.Qh, data.sp.rec[,7:24])
-  data.sp.rec.Qi <- cbind.hyperframe(data.sp.rec.Qi, data.sp.rec[,7:24])
+  data.sp.rec.Fs <- cbind.hyperframe(data.sp.rec.Fs, data.sp.rec[,7:20])
+  data.sp.rec.Qh <- cbind.hyperframe(data.sp.rec.Qh, data.sp.rec[,7:20])
+  data.sp.rec.Qi <- cbind.hyperframe(data.sp.rec.Qi, data.sp.rec[,7:20])
   
   # https://www.r-graph-gallery.com/4-barplot-with-error-bar.html
   # Calculates mean, sd, se and IC
@@ -1191,10 +1171,10 @@ for (j in 1:length(Year)) {
   plot(kNN.E.env.thnn, legend = F, mar.panel = c(1, 1, 1, 1), title = NULL)
   par(old.par)
   
-  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + CanOpen + LAI + DiffBelow + N.Sunflecks + Max.Sunflecks + Fs + Hed + Pter + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id)
-  if (fit.gam == T) fit.env.full <- mppm(ppp ~ 1 + Treat + bs(Canopy,3) + bs(CanOpen,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(N.Sunflecks,3) + bs(Max.Sunflecks,3) + bs(Fs,3) + bs(Hed,3) + bs(Pter,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
+  if (fit.gam == F) fit.env.full <- mppm(ppp ~ 1 + Treat + Canopy + LAI + DiffBelow + Fs + Pter + Hed + Rub + Scl, data.sp.rec.Fs[Plots,], iformula = ~Interaction:id)
+  if (fit.gam == T) fit.env.full <- mppm(ppp ~ 1 + Treat + bs(Canopy,3) + bs(LAI,3) + bs(DiffBelow,3) + bs(Fs,3) + bs(Pter,3) + bs(Hed,3) + bs(Rub,3) + bs(Scl,3), use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
   
-  fit.env.red <- stepAIC(fit.env.full)
+  fit.env.red <- stepAIC(fit.env.full, direction = "backward")
   dev.env <- anova(fit.env.red)
   
   grid.newpage()
@@ -1248,9 +1228,9 @@ for (j in 1:length(Year)) {
     if (fit.gam == F) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + Dens.adult + Dens.size.rec + Dens.rich.rec + Dens.shan.rec, data = data.sp$covs[[i]])
     if (fit.gam == T) fit.dens.full <- ppm(data.sp.rec$ppp[[i]] ~ 1 + bs(Dens.adult,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3), use.gam = TRUE, data = data.sp$covs[[i]])
     
-    fit.dens[[i]] <- step(fit.dens.full, trace = 0)
-    title.dens[[i]] <- as.character(fit.dens[[i]]$trend)[[2]]
-    
+    fit.dens[[i]] <- step(fit.dens.full, , direction = "backward", trace = 0)
+    title.dens[[i]] <-  paste(as.character(fit.dens[[i]]$trend), collapse = "")
+
     var.dens.Plot[[i]] <- summary(fit.dens[[i]])$coefs.SE.CI
     
     # for (j in 1:length(var.dens)) {
@@ -1312,9 +1292,9 @@ for (j in 1:length(Year)) {
   
 
   #plot(data.sp.rec$pred.dens[Plots], main = "Predicted Aggregation")
-  data.sp.rec.Fs <- cbind.hyperframe(data.sp.rec.Fs, data.sp.rec[,25:35])
-  data.sp.rec.Qh <- cbind.hyperframe(data.sp.rec.Qh, data.sp.rec[,25:35])
-  data.sp.rec.Qi <- cbind.hyperframe(data.sp.rec.Qi, data.sp.rec[,25:35])
+  data.sp.rec.Fs <- cbind.hyperframe(data.sp.rec.Fs, data.sp.rec[,21:31])
+  data.sp.rec.Qh <- cbind.hyperframe(data.sp.rec.Qh, data.sp.rec[,21:31])
+  data.sp.rec.Qi <- cbind.hyperframe(data.sp.rec.Qi, data.sp.rec[,21:31])
   
   
   # https://www.r-graph-gallery.com/4-barplot-with-error-bar.html
@@ -1365,7 +1345,7 @@ for (j in 1:length(Year)) {
   if (fit.gam == F) fit.dens.full <- mppm(ppp ~ 1 + Treat +  Dens.adult + Dens.size.rec + Dens.rich.rec + Dens.shan.rec, data.sp.rec[Plots,], iformula = ~Interaction*id)
   if (fit.gam == T) fit.dens.full <- mppm(ppp ~ 1 + Treat + bs(Dens.adult,3) + bs(Dens.size.rec,3) + bs(Dens.rich.rec,3) + bs(Dens.shan.rec,3),  use.gam = TRUE, data.sp.rec[Plots,], iformula = ~Interaction*id)
   
-  fit.dens.red <- stepAIC(fit.dens.full)
+  fit.dens.red <- stepAIC(fit.dens.full, direction = "backward")
   dev.dens <- anova(fit.dens.red)
   grid.newpage()
   grid.table(dev.dens)
@@ -1427,9 +1407,10 @@ for (j in 1:length(Year)) {
     Jdif.E.size.c.rec.ctrl, Jdif.E.size.c.rec.thnn,
     Jdif.E.fate.rec, K012.E.fate.rec.i,
     Jdif.E.fate.rec.cat, Jdif.E.fate.rec.gof,
-    K012.E.fate.rec.i.cat, K012.E.fate.rec.i.gof,
+    K012.E.fate.rec.i.cat, #K012.E.fate.rec.i.gof
+    Kmulti.E.fate.rec.i.cat, Kmulti.E.fate.rec.i.gof, 
     Jdif.E.fate.rec.ctrl, Jdif.E.fate.rec.thnn, K012.E.fate.rec.i.ctrl, K012.E.fate.rec.i.thnn,
-    null_model_Kmulti.ctrl, null_model_Kmulti.thnn, 
+    Kmulti.E.fate.rec.i.ctrl, Kmulti.E.fate.rec.i.thnn,
     Jdif.E.fate.ad.cat, 
     markcor.E.size.c.alive.rec.cat, markcor.E.size.c.dead.rec.cat,
     markcor.E.size.c.alive.rec.thnn, markcor.E.size.c.alive.rec.ctrl,
