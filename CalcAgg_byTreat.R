@@ -16,6 +16,7 @@ library(onpoint)
 library(MASS)
 library(zoo)
 library(splines)
+library(plotrix)
 
 library(ggplot2)
 library(gridExtra)
@@ -34,6 +35,7 @@ setwd("~/Documentos/Datos NO publicados/BioIntForest/Data/Inventarios_floristico
 data.frond <- data.frame(read.table(file = "plantulas_2008_2013.csv", header = T, sep = ",",dec = ".")) #data.frame(read.table(file="cruce_sombras_plantulas_2008_2011_JVR.csv", sep=";" ,dec=","))
 data.pinus <- data.frame(read.table(file = "PS09Medidas pino 2009 con coordenadas.csv", header = T, sep = ";",dec = ","))
 data.pinus99 <- data.frame(read.table(file = "Medidas pinos 1999.csv", header = T, sep = ";",dec = ","))
+data.brdlf <- data.frame(read.table(file = "2009 DnFs.csv", header = T, sep = ";",dec = "."))
 
 #Treatment plots
 Treat <-  c("20%", "30%", "0%", "0%", "30%", "20%", "30%", "20%", "0%") #ONLY 0% and 30%
@@ -68,6 +70,9 @@ for (j in 1:length(Year)) {
   Plots <- unique(data.frond$PARCELA)
   map.Plots <- list()
   
+  sum.tree.large <- NULL
+  sum.tree.allom <- NULL
+  
   data.sp <- hyperframe(Plot = 1:max(Plots), Year = Year[j], Treat = Treat, ppp = listof(rep(NA, 9)), ppp = listof(rep(NA, 9)), covs = listof(rep(NA, 9)))
   data.size <- data.sp
   data.size.c <- data.sp
@@ -100,6 +105,8 @@ for (j in 1:length(Year)) {
   matrix.env <- list() #para almacenar las matrices de correlaciones de las variables
   matrix.dens <- list()
   
+  old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
+  
   for (i in Plots) {
     
     cat("Setting up Plot...", i, "\n")
@@ -121,10 +128,25 @@ for (j in 1:length(Year)) {
     
     # Modelo para calcular las relacion alometrica entre dbh y altura
     m <- nls(y~a*x/(b+x)) 
-    cor(y, predict(m))
+    sum.tree.allom <- rbind(sum.tree.allom, cor(y, predict(m)))
     
     data.pinus.plot <- subset(data.pinus, PARCELA == paste0("A",i))
     data.pinus.plot <- data.pinus.plot[!is.na(data.pinus.plot$Dn_NS_07) | !is.na(data.pinus.plot$Dn_EO_07),]
+    
+    data.brdlf.plot <- subset(data.brdlf, Plot == paste0("A",i))
+    data.brdlf.plot <- data.brdlf.plot[!is.na(data.brdlf.plot$DBH2009),]
+    
+    par(mfrow = c(1,2), mar = c(1, 1, 1.25, 1.25), oma = c(4, 4, 2, 2)) 
+    hist(data.pinus.plot$Dn_NS_09, main = "DBH pinus")
+    hist(data.brdlf.plot$DBH2009, main = "DBH Broad-leaf")
+    par(old.par)
+    
+    data.sum.plot <- c(sum(data.pinus.plot$Dn_NS_09 > 10, na.rm = T), 
+                       sum(data.brdlf.plot$DBH2009 > 10, na.rm = T), 
+                       sum(data.brdlf.plot$DBH2009 > 10 & data.brdlf.plot$Broadl == "Fs", na.rm = T))
+    
+    sum.tree.large <- rbind(sum.tree.large, data.sum.plot / sum(data.sum.plot))
+    
     
     #Load environmental maps
     
@@ -484,6 +506,10 @@ for (j in 1:length(Year)) {
     map.Plots$p_2[[1]] + theme(legend.box.margin = margin(0, 0, 0, 12))
   )
   
+  sum.tree.large <- data.frame(P.pinus = sum.tree.large[,1] * 100, P.broadlf = sum.tree.large[,2] * 100, P.fsilv = sum.tree.large[,3] * 100)
+  aggregate(P.broadlf ~ 1, data = sum.tree.large, FUN = function(x) c(mn = mean(x), sd = sd(x), sd.e = std.error(x)) )
+  aggregate(sum.tree.allom ~ 1, data = data.frame(sum.tree.allom), FUN = function(x) c(mn = mean(x), sd = sd(x), sd.e = std.error(x)) )
+  
   # add the legend to the row we made earlier. Give it one-third of 
   # the width of one plot (via rel_widths).
   print(
@@ -550,7 +576,6 @@ for (j in 1:length(Year)) {
   plot(g.E.rec.thnn, main = NULL, legend = F)
   plot(kNN.E.rec.thnn, main = NULL, legend = F)
   title("Ctrl (u) vs Thinning (l) plots", line = 0, outer = TRUE)
-  old.par <- par(mfrow = c(1,1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0))
   par(old.par)
   
   
